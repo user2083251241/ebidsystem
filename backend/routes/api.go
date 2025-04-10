@@ -1,27 +1,29 @@
 package routes
 
 import (
+	"github.com/champNoob/ebidsystem/backend/config"
 	"github.com/champNoob/ebidsystem/backend/controllers"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/basicauth"
+	jwtware "github.com/gofiber/jwt/v3"
 )
 
 func SetupRoutes(app *fiber.App) {
-	// 公共路由（无需认证）
+	// 公开路由
 	public := app.Group("/api")
 	{
-		public.Post("/register", controllers.Register) // 用户注册
-		public.Post("/login", controllers.Login)       // 用户登录
+		public.Post("/register", controllers.Register)
+		public.Post("/login", controllers.Login)
 	}
 
+	// JWT 中间件
+	jwtMiddleware := jwtware.New(jwtware.Config{
+		SigningKey: []byte(config.Get("JWT_SECRET")),
+	})
+
 	// 需要认证的路由
-	authenticated := app.Group("/api", basicauth.New(basicauth.Config{
-		Users: map[string]string{
-			"admin": "admin", // 示例基础认证（实际项目应使用 JWT）
-		},
-	}))
+	authenticated := app.Group("/api", jwtMiddleware)
 	{
-		authenticated.Post("/orders", controllers.CreateOrder) // 创建订单
-		authenticated.Get("/orders", controllers.GetOrders)    // 查询订单
+		authenticated.Post("/orders", controllers.CreateOrder)
+		authenticated.Get("/orders", controllers.GetOrders)
 	}
 }
