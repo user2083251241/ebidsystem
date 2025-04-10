@@ -2,7 +2,7 @@
 
 ## 总体需求分析
 
-![alt text](pic-1.png)
+![alt text](projectRequirement.png)
 
 ### 角色定义与互动流程
 
@@ -70,4 +70,6 @@ backend/
 └── .env                # 环境变量（数据库路径、密钥）
 ```
 
-### 
+### ？
+
+【未完成】
