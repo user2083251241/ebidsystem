@@ -5,8 +5,11 @@ import (
 
 	"github.com/champNoob/ebidsystem/backend/config"
 	"github.com/champNoob/ebidsystem/backend/models"
+
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v5" //统一使用 v5
+
+	// "github.com/gofiber/contrib/jwt" //使用支持 v5 的 Fiber 中间件
 	"golang.org/x/crypto/bcrypt"
 )
 

@@ -3,8 +3,8 @@ package routes
 import (
 	"github.com/champNoob/ebidsystem/backend/config"
 	"github.com/champNoob/ebidsystem/backend/controllers"
+	jwtware "github.com/gofiber/contrib/jwt" //使用新版中间件，并使用别名 jwtware
 	"github.com/gofiber/fiber/v2"
-	jwtware "github.com/gofiber/jwt/v3"
 )
 
 func SetupRoutes(app *fiber.App) {
@@ -17,7 +17,10 @@ func SetupRoutes(app *fiber.App) {
 
 	// JWT 中间件
 	jwtMiddleware := jwtware.New(jwtware.Config{
-		SigningKey: []byte(config.Get("JWT_SECRET")),
+		SigningKey: jwtware.SigningKey{
+			Key: []byte(config.Get("JWT_SECRET")),
+		},
+		// 其他配置...
 	})
 
 	// 需要认证的路由

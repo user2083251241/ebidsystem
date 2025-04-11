@@ -66,7 +66,13 @@ backend/
 ├── controllers/
 │   ├── auth.go         # 注册/登录逻辑
 │   └── order.go        # 订单创建/查询逻辑
+├── bin/
+│   ├── ebidsystem.exe  # 可执行文件
+│   └── .env            # 环境变量（数据库路径、密钥）【？】
 ├── main.go             # 主入口（初始化 Fiber、数据库）
+├── start.bat           # 启动脚本（Win11）
+├── go.mod              # Go 依赖管理
+├── go.sum              # Go 依赖校验
 └── .env                # 环境变量（数据库路径、密钥）
 ```
 
