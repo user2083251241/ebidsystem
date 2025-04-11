@@ -55,20 +55,22 @@
 
 ```tree
 backend/
-├── config/
-│   └── config.go       # 配置文件加载（如 JWT 密钥）
-├── models/
-│   ├── user.go         # User 模型定义
-│   ├── order.go        # Order 模型定义
-│   └── stock.go        # Stock 模型定义
+├── config/             # 配置文件夹
+│   └── config.go          # 配置文件加载（如 JWT 密钥）
+├── models/             # 定义数据结构与数据库表映射
+│   ├── user.go            # User 模型定义
+│   ├── order.go           # Order 模型定义
+│   └── stock.go           # Stock 模型定义
 ├── routes/
-│   └── api.go          # 路由定义（/api/*）
-├── controllers/
-│   ├── auth.go         # 注册/登录逻辑
-│   └── order.go        # 订单创建/查询逻辑
+│   └── api.go             # 路由定义（/api/*）
+├── controllers/        # 处理 HTTP 请求，调用服务逻辑
+│   ├── auth.go            # 注册/登录逻辑
+│   └── order.go           # 订单创建/查询逻辑
+├── services/           # 实现核心业务逻辑
+│   └── matching.go        # 订单撮合逻辑
 ├── bin/
-│   ├── ebidsystem.exe  # 可执行文件
-│   └── .env            # 环境变量（数据库路径、密钥）【？】
+│   ├── ebidsystem.exe     # 可执行文件
+│   └── .env               # 环境变量（数据库路径、密钥）【？】
 ├── main.go             # 主入口（初始化 Fiber、数据库）
 ├── start.bat           # 启动脚本（Win11）
 ├── go.mod              # Go 依赖管理

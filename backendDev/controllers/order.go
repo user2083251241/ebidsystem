@@ -2,12 +2,11 @@ package controllers
 
 import (
 	"github.com/champNoob/ebidsystem/backend/models"
-	"github.com/golang-jwt/jwt/v5"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-// 创建订单
+// 创建订单：
 func CreateOrder(c *fiber.Ctx) error {
 	type OrderRequest struct {
 		Symbol    string  `json:"symbol"`
@@ -60,11 +59,23 @@ func CreateOrder(c *fiber.Ctx) error {
 	return c.JSON(order)
 }
 
-// 查询订单
+// 查询订单：
 func GetOrders(c *fiber.Ctx) error {
+	// 从 JWT 中获取用户 ID
+	token := c.Locals("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userID := uint(claims["user_id"].(float64))
+
 	var orders []models.Order
-	if err := db.Find(&orders).Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch orders"})
+	if err := db.Where("user_id = ?", userID).Find(&orders).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "查询订单失败"})
 	}
+
 	return c.JSON(orders)
+}
+
+// 取消订单（示例）
+func CancelOrder(c *fiber.Ctx) error {
+	// ...（实现逻辑）
+	return c.JSON(fiber.Map{"message": "订单已取消"})
 }
