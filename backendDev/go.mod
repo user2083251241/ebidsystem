@@ -1,8 +1,13 @@
-module github.com/champNoob/ebidsystem/backend
+module github.com/user2083251241/ebidsystem
+
+// module github.com/champNoob/ebidsystem/backend //旧路径
 
 go 1.24.1
 
+replace github.com/champNoob/ebidsystem/backend => ./ //宏替换
+
 require (
+	github.com/champNoob/ebidsystem/backend v0.0.0-00010101000000-000000000000
 	github.com/gofiber/contrib/jwt v1.1.0
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/golang-jwt/jwt/v5 v5.2.2

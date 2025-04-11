@@ -14,7 +14,6 @@ func SetupRoutes(app *fiber.App) {
 		public.Post("/register", controllers.Register)
 		public.Post("/login", controllers.Login)
 	}
-
 	// JWT 中间件
 	jwtMiddleware := jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{
@@ -22,7 +21,6 @@ func SetupRoutes(app *fiber.App) {
 		},
 		// 其他配置...
 	})
-
 	// 需要认证的路由
 	authenticated := app.Group("/api", jwtMiddleware)
 	{
