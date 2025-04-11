@@ -24,6 +24,10 @@
           />
         </div>
   
+        <div v-if="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
+  
         <div class="form-group">
           <button type="submit">Login</button>
         </div>
@@ -42,18 +46,39 @@
       const username = ref('');
       const password = ref('');
       const router = useRouter();
+      const errorMessage = ref('');
   
       // 登录处理方法
-      const handleLogin = () => {
-        // 仅在控制台打印用户名和密码
-        console.log('用户名:', username.value);
-        console.log('密码:', password.value);
-        alert('Login successful!');
+      const handleLogin = async () => {
+        try {
+          errorMessage.value = '';
+          const response = await axios.post('http://localhost:3000/api/login', {
+            username: username.value,
+            password: password.value
+          });
+  
+          if (response.data.token) {
+            // 保存 token 到 localStorage
+            localStorage.setItem('token', response.data.token);
+            // 保存用户信息
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+            
+            // 设置 axios 默认 headers
+            axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+            
+            // 登录成功后跳转到首页
+            router.push('/');
+          }
+        } catch (error) {
+          console.error('登录失败:', error);
+          errorMessage.value = error.response?.data?.message || 'Failed to login. Please check your credentials and try again.';
+        }
       };
   
       return {
         username,
         password,
+        errorMessage,
         handleLogin,
       };
     },
@@ -101,5 +126,11 @@
   
   button:hover {
     background-color: #45a049;
+  }
+  
+  .error-message {
+    color: #ff0000;
+    margin-bottom: 15px;
+    font-size: 14px;
   }
   </style>

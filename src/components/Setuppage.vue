@@ -3,7 +3,7 @@
       <h1>Bidsystem</h1>
       <div class="page-container">
         <div v-if="currentView === 'login'">
-          <textlogin />
+          <LoginPage />
           <button @click="switchView('register')">Switch to Register</button>
         </div>
         <div v-else>
@@ -15,12 +15,12 @@
   </template>
   
   <script>
-  import textlogin from './textlogin.vue';
+  import LoginPage from './LoginPage.vue';
   import Register from './Register.vue';
   
   export default {
     components: {
-      textlogin,
+      LoginPage,
       Register
     },
     data() {
