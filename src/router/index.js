@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import TableComponent from '../components/TableComponent.vue';
+import Creator from '@/components/operation/Creator.vue';
 
 const routes = [
   {
@@ -32,6 +34,16 @@ const routes = [
     name: 'Table',
     component: () => import('../components/TableComponent.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/',
+    name: 'Table',
+    component: TableComponent
+  },
+  {
+    path: '/create',
+    name: 'Create',
+    component: Creator
   }
 ];
 

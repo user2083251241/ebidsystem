@@ -11,9 +11,16 @@
       <tbody>
         <tr v-for="(row, rowIndex) in tableData" :key="rowIndex">
           <td v-for="(cell, cellIndex) in row" :key="cellIndex">{{ cell }}</td>
+          <td>
+            <button @click="deleteOrder(rowIndex)">Delete</button>
+            <button @click="modifyOrder(rowIndex)">Modify</button>
+          </td>
         </tr>
       </tbody>
     </table>
+    <div class="create-button">
+    <button @click="goToCreate">Create</button>
+    </div>
   </div>
 </template>
 
@@ -24,7 +31,7 @@ export default {
   name: 'TableComponent',
   data() {
     return {
-      headers: ['ID', 'CreatedAt', 'UpdatedAt', 'DeletAt', 'UserID', 'Symbol', 'Quantity', 'Price', 'OrderType', 'Direction', 'Status'],
+      headers: ['ID', 'CreatedAt', 'UpdatedAt', 'DeletAt', 'UserID', 'Symbol', 'Quantity', 'Price', 'OrderType', 'Direction', 'Status','Operate'],
       tableData: [],
       loading: true,
       error: null
@@ -90,6 +97,19 @@ export default {
         minute: '2-digit',
         second: '2-digit'
       });
+    },
+    deleteOrder(index) {
+    // 删除订单的逻辑
+    console.log('Deleting order at index:', index);
+    this.tableData.splice(index, 1);
+  },
+  modifyOrder(index) {
+    // 修改订单的逻辑
+    console.log('Modifying order at index:', index);
+    // 这里可以弹出一个模态框，让用户输入新的订单信息
+  },
+  goToCreate() {
+      this.$router.push('/create');
     }
   }
 };
@@ -128,6 +148,20 @@ tr:hover {
   text-align: center;
   padding: 20px;
   color: #666;
+}
+
+button {
+  margin: 0 5px;
+  padding: 5px 10px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
 }
 
 .error {
