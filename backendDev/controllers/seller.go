@@ -18,10 +18,14 @@ func CreateSellOrder(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "请求格式错误"})
 	}
-
-	// 从 JWT 中获取卖家 ID
+	// 从 JWT 中获取卖家 ID:
 	userID := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)["user_id"].(uint)
+	// // 验证买卖方向：
+	// if user.Driection == "buy" {
+	// 	return c.Status(400).JSON(fiber.Map{"error": "卖方不能买入"})
+	// }
 
+	// 创建订单：
 	order := models.Order{
 		UserID:    userID,
 		Symbol:    req.Symbol,
