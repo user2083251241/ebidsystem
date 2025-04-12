@@ -24,14 +24,17 @@ func SetupRoutes(app *fiber.App) {
 	// 认证路由组：
 	authenticated := app.Group("/api", jwtMiddleware)
 	{
+		// 所有认证用户均可调用：
+		authenticated.Post("/logout", controllers.Logout) // 登出
 		// 卖家角色路由组：
 		seller := authenticated.Group("/seller", middleware.SellerOnly)
 		{
-			seller.Post("/orders", controllers.CreateSellOrder)         // 创建卖出订单
-			seller.Put("/orders/:id", controllers.UpdateOrder)          // 修改订单
-			seller.Post("/orders/:id/cancel", controllers.CancelOrder)  // 取消订单
-			seller.Get("/orders", controllers.GetSellerOrders)          // 查看卖家订单
-			seller.Post("/authorize/sales", controllers.AuthorizeSales) // 授权销售
+			seller.Post("/orders", controllers.CreateSellOrder)                // 创建卖出订单
+			seller.Put("/orders/:id", controllers.UpdateOrder)                 // 修改订单
+			seller.Delete("/orders/:id", controllers.CancelOrder)              // 单个撤单
+			seller.Post("/orders/batch-cancel", controllers.BatchCancelOrders) // 批量撤单
+			seller.Get("/orders", controllers.GetSellerOrders)                 // 查看卖家订单
+			seller.Post("/authorize/sales", controllers.AuthorizeSales)        // 授权销售
 		}
 		// 销售角色路由组：
 		sales := authenticated.Group("/sales", middleware.SalesOnly)

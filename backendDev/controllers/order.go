@@ -83,35 +83,3 @@ func GetOrders(c *fiber.Ctx) error {
 
 	return c.JSON(orders)
 }
-
-// 取消订单：
-func CancelOrder(c *fiber.Ctx) error {
-	// 从请求体中获取订单 ID:
-	type CancelRequest struct {
-		OrderID uint `json:"order_id"`
-	}
-	var req CancelRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request format"})
-	}
-	// 从 JWT 中获取用户 ID 和角色：
-	token := c.Locals("user").(*jwt.Token)
-	claims := token.Claims.(jwt.MapClaims)
-	userID := uint(claims["user_id"].(float64))
-	role := claims["role"].(string)
-	// 查询订单：
-	var order models.Order
-	if err := db.First(&order, req.OrderID).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "订单不存在"})
-	}
-	// 权限校验：仅交易员可取消他人订单，客户只能取消自己的订单：
-	if role != "trader" && order.UserID != userID {
-		return c.Status(403).JSON(fiber.Map{"error": "无权操作此订单"})
-	}
-	// 更新订单状态为 "cancelled"：
-	if err := db.Model(&order).Update("status", "cancelled").Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "取消失败"})
-	}
-	// 返回成功信息：
-	return c.JSON(fiber.Map{"message": "订单已取消"})
-}

@@ -130,10 +130,18 @@ func Logout(c *fiber.Ctx) error {
 	token := c.Locals("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
 	userID := uint(claims["user_id"].(float64))
-	// 标记用户为已删除（软删除）：
-	if err := db.Model(&models.User{}).Where("id = ?", userID).Update("is_deleted", true).Error; err != nil {
+	// 取消所有未完成订单：
+	if err := db.Model(&models.Order{}).
+		Where("user_id = ? AND status IN ('pending', 'draft')", userID).
+		Update("status", "cancelled").Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "注销失败"})
 	}
-	// 可选：将 Token 加入黑名单（需额外实现，例如使用 Redis 存储失效 Token）
+	// 标记用户为已删除：
+	if err := db.Model(&models.User{}).
+		Where("id = ?", userID).
+		Update("is_deleted", true).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "注销失败"})
+	}
+	// 返回成功信息：
 	return c.JSON(fiber.Map{"message": "用户已注销"})
 }
