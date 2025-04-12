@@ -76,7 +76,7 @@ export default {
 
       try {
         // 发送 POST 请求到后端注册接口
-        const response = await axios.post('https://0125f20e-3482-4036-9bbd-f59f07ebd3f4.mock.pstmn.io/register', {
+        const response = await axios.post('/register', {
           username: username.value,
           password: password.value,
           role: role.value

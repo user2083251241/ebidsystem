@@ -38,12 +38,14 @@ const routes = [
   {
     path: '/',
     name: 'Table',
-    component: TableComponent
+    component: TableComponent,
+    meta: { requiresAuth: true }
   },
   {
     path: '/create',
     name: 'Create',
-    component: Creator
+    component: Creator,
+    meta: { requiresAuth: true }
   }
 ];
 

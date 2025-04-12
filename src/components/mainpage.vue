@@ -1,6 +1,6 @@
 <template>
     <div class="main-page">
-      <h1>Welcome To Bidsystem</h1>
+      <h1>EBidsystem</h1>
       <div class="content">
         <Sidebar v-if="showSidebar"/>
         <div class="main-content">

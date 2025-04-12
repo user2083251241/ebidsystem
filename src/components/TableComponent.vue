@@ -12,29 +12,42 @@
         <tr v-for="(row, rowIndex) in tableData" :key="rowIndex">
           <td v-for="(cell, cellIndex) in row" :key="cellIndex">{{ cell }}</td>
           <td>
-            <button @click="deleteOrder(rowIndex)">Delete</button>
+            <button @click="confirmDelete(rowIndex)">Delete</button>
             <button @click="modifyOrder(rowIndex)">Modify</button>
           </td>
         </tr>
       </tbody>
     </table>
     <div class="create-button">
-    <button @click="goToCreate">Create</button>
+      <button @click="goToCreate">Create</button>
     </div>
+    <ConfirmModal
+      :isVisible="isConfirmModalVisible"
+      title="Confirm Delete"
+      message="Are you sure you want to delete this order?"
+      @confirm="deleteOrder(selectedIndex)"
+      @cancel="closeConfirmModal"
+    />
   </div>
 </template>
 
 <script>
 import axios from 'axios';
+import ConfirmModal from './ConfirmModal.vue';
 
 export default {
   name: 'TableComponent',
+  components: {
+    ConfirmModal
+  },
   data() {
     return {
-      headers: ['ID', 'CreatedAt', 'UpdatedAt', 'DeletAt', 'UserID', 'Symbol', 'Quantity', 'Price', 'OrderType', 'Direction', 'Status','Operate'],
+      headers: ['ID', 'CreatedAt', 'UpdatedAt', 'DeletedAt', 'UserID', 'Symbol', 'Quantity', 'Price', 'OrderType', 'Direction', 'Status', 'Operate'],
       tableData: [],
       loading: true,
-      error: null
+      error: null,
+      isConfirmModalVisible: false,
+      selectedIndex: -1
     };
   },
   async created() {
@@ -45,11 +58,11 @@ export default {
       try {
         this.loading = true;
         this.error = null;
-        
-        // 从localStorage获取token
+
+        // 从 localStorage 获取 token
         const token = localStorage.getItem('token');
         if (!token) {
-          throw new Error('plaese login first');
+          throw new Error('Please login first');
         }
 
         // 发送请求获取用户商品列表
@@ -62,7 +75,7 @@ export default {
         console.log('Response data:', response.data);
 
         // 处理返回的数据
-        if (response.data && Array.isArray(response.data)) {//
+        if (response.data && Array.isArray(response.data)) {
           this.tableData = response.data.map(product => [
             product.ID,
             this.formatDate(product.CreatedAt),
@@ -98,17 +111,55 @@ export default {
         second: '2-digit'
       });
     },
-    deleteOrder(index) {
-    // 删除订单的逻辑
-    console.log('Deleting order at index:', index);
-    this.tableData.splice(index, 1);
-  },
-  modifyOrder(index) {
-    // 修改订单的逻辑
-    console.log('Modifying order at index:', index);
-    // 这里可以弹出一个模态框，让用户输入新的订单信息
-  },
-  goToCreate() {
+    confirmDelete(index) {
+      this.selectedIndex = index;
+      this.isConfirmModalVisible = true;
+    },
+    closeConfirmModal() {
+      this.isConfirmModalVisible = false;
+    },
+    async deleteOrder(index) {
+      try {
+        // 获取订单的 ID
+        const orderId = this.tableData[index][0]; // 假设订单 ID 是每行的第一个元素
+
+        // 从 localStorage 获取 token
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Please login first');
+        }
+
+        // 发送 DELETE 请求
+        const response = await axios.delete('/DeleteOrder', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          data: {
+            orderId: index
+      }
+        });
+
+        // 检查响应状态码
+        if (response.status === 201) {
+          console.log('Order deleted successfully');
+          // 从 tableData 中删除该订单
+          this.tableData.splice(index, 1);
+        } else {
+          console.error('Failed to delete order');
+        }
+      } catch (error) {
+        console.error('Error deleting order:', error);
+        console.error('Failed to delete order');
+      } finally {
+        this.closeConfirmModal();
+      }
+    },
+    modifyOrder(index) {
+      // 修改订单的逻辑
+      console.log('Modifying order at index:', index);
+      // 这里可以弹出一个模态框，让用户输入新的订单信息
+    },
+    goToCreate() {
       this.$router.push('/create');
     }
   }
