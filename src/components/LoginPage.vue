@@ -52,7 +52,7 @@
       const handleLogin = async () => {
         try {
           errorMessage.value = '';
-          const response = await axios.post('https://0125f20e-3482-4036-9bbd-f59f07ebd3f4.mock.pstmn.io/login', {
+          const response = await axios.post('/login', {
             username: username.value,
             password: password.value
           });
@@ -61,7 +61,11 @@
             // 保存 token 到 localStorage
             localStorage.setItem('token', response.data.token);
             // 保存用户信息
-            //localStorage.setItem('user', JSON.stringify(response.data.user));
+            localStorage.setItem('user', JSON.stringify({
+        username: username.value,
+        //role: role.value
+          }));
+        // //JSON.stringify(response.data.user)
             
             // 设置 axios 默认 headers
             axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
@@ -70,7 +74,7 @@
             router.push('/main');
           }
         } catch (error) {
-          console.error('登录失败:', error);
+          console.error('Failed to login:', error);
           errorMessage.value = error.response?.data?.message || 'Failed to login. Please check your credentials and try again.';
         }
       };

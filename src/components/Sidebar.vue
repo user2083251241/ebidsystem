@@ -1,18 +1,37 @@
 <template>
     <div class="sidebar">
-      <h3>Sidebar</h3>
-      <ul>
-        <li><a href="#">Home</a></li>
-        <li><a href="#">More</a></li>
-        <li><a href="#">Serve</a></li>
-        <li><a href="#">Contact Us</a></li>
+      <h3>profile</h3>
+      <div v-if="user">
+        <ul>
+        <li><a href="#">User:{{ user.username }}</a></li>
+        <!-- <li><a href="#">More</a></li> -->
+        <!-- <li><a href="#">Serve</a></li> -->
+        <!-- <li><a href="#">Contact Us</a></li> -->
       </ul>
+      </div>
+  
     </div>
   </template>
-  
+
   <script>
+import { ref, onMounted } from 'vue';
+
   export default {
-    name: 'Sidebar'
+    name: 'Sidebar',
+    setup() {
+    const user = ref(null);
+
+    onMounted(() => {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        user.value = JSON.parse(storedUser);
+      }
+    });
+
+    return {
+      user
+    };
+  }
   };
   </script>
   
