@@ -55,29 +55,90 @@
 
 ```tree
 backend/
-├── config/             # 配置文件夹
-│   └── config.go          # 配置文件加载（如 JWT 密钥）
-├── models/             # 定义数据结构与数据库表映射
-│   ├── user.go            # User 模型定义
-│   ├── order.go           # Order 模型定义
-│   └── stock.go           # Stock 模型定义
-├── routes/
-│   └── api.go             # 路由定义（/api/*）
-├── controllers/        # 处理 HTTP 请求，调用服务逻辑
-│   ├── auth.go            # 注册/登录逻辑
-│   └── order.go           # 订单创建/查询逻辑
-├── services/           # 实现核心业务逻辑
-│   └── matching.go        # 订单撮合逻辑
-├── bin/
-│   ├── ebidsystem.exe     # 可执行文件
-│   └── .env               # 环境变量（数据库路径、密钥）【？】
-├── main.go             # 主入口（初始化 Fiber、数据库）
-├── start.bat           # 启动脚本（Win11）
-├── go.mod              # Go 依赖管理
-├── go.sum              # Go 依赖校验
-└── .env                # 环境变量（数据库路径、密钥）
+├── config/                # 配置管理
+│   └── config.go             # 读取环境变量
+├── models/                # 数据模型定义
+│   ├── user.go               # 用户模型
+│   ├── order.go              # 订单模型
+│   ├── stock.go              # 股票模型（暂不实现）
+│   └── authorization.go      # 卖家-销售授权模型（已定义在 ./user.go 中，暂不独立出来）
+├── middleware/            # 中间件定义
+│   ├── auth.go               # 角色权限校验中间件（如 SellerOnly, SalesOnly）
+│   ├── jwt.go                # JWT 认证中间件
+│   └── logging.go            # 请求日志中间件
+├── routes/                # 路由定义
+│   └── api.go                # API 路由注册
+├── controllers/           # 控制器（处理 HTTP 请求）
+│   ├── auth.go               # 注册/登录/注销
+│   ├── order.go              # 订单创建、查询、取消
+│   ├── sales.go              # 销售相关功能（草稿、提交审批）
+│   ├── client.go             # 客户相关功能
+│   └── seller.go             # 卖家授权管理
+├── services/              # 核心业务逻辑
+│   ├── matching.go           # 订单撮合引擎
+│   └── order.go              # 订单状态管理
+├── bin/                   # 编译输出目录
+│   ├── ebidsystem.exe        # 可执行文件
+│   └── .env                  # 环境变量（由根目录复制而来）
+├── main.go                # 应用入口（初始化、启动服务）
+├── go.mod                 # Go 模块依赖
+├── go.sum                 # 依赖校验
+└── .env                   # 环境变量（开发环境配置）
 ```
 
-### ？
+### 主函数核心流程
 
-【未完成】
+1. 加载环境变量：读取 .env 文件中的配置（如数据库连接信息）
+
+2. 连接数据库：通过 GORM 初始化 MySQL 连接
+
+3. 自动迁移表结构：根据 models 包中的结构体（如 User、Order）创建数据库表
+
+4. 初始化 Fiber 应用：注册全局中间件（如跨域、日志、异常恢复）
+
+5. 注册路由：调用 routes.SetupRoutes(app) 绑定 API 路径
+
+6. 启动服务：监听指定端口（如 3000）
+
+### 批处理文件功能
+
+取得管理员权限+授权通过防火墙+编译+运行+输出日志
+
+### 路由
+
+对路由使用了 `RESTful` 规范化实践
+
+```go
+// 认证路由组：
+authenticated := app.Group("/api", jwtMiddleware)
+{
+   // 卖家角色路由组：
+   seller := authenticated.Group("/seller", middleware.SellerOnly)
+   {
+      seller.Post("/orders", controllers.CreateSellOrder)         // 创建卖出订单
+      seller.Put("/orders/:id", controllers.UpdateOrder)          // 修改订单
+      seller.Post("/orders/:id/cancel", controllers.CancelOrder)  // 取消订单
+      seller.Get("/orders", controllers.GetSellerOrders)          // 查看卖家订单
+      seller.Post("/authorize/sales", controllers.AuthorizeSales) // 授权销售
+   }
+   // 销售角色路由组：
+   sales := authenticated.Group("/sales", middleware.SalesOnly)
+   {
+      sales.Get("/orders", controllers.GetAuthorizedOrders)     // 查看已授权订单
+      sales.Post("/drafts", controllers.CreateDraftOrder)       // 创建订单草稿
+      sales.Put("/drafts/:id", controllers.UpdateDraftOrder)    // 修改草稿
+      sales.Post("/drafts/:id/submit", controllers.SubmitDraft) // 提交草稿
+   }
+   // 客户角色路由组：
+   client := authenticated.Group("/client")
+   {
+      client.Post("/orders", controllers.CreateBuyOrder) // 创建买入订单
+      client.Get("/orders", controllers.GetClientOrders) // 查看客户订单
+   }
+   // 交易员角色路由组：
+   trader := authenticated.Group("/trader", middleware.TraderOnly)
+   {
+      trader.Get("/orders", controllers.GetAllOrders) // 查看所有订单
+   }
+}
+```

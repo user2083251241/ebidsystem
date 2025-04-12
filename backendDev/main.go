@@ -9,6 +9,7 @@ import (
 	"github.com/champNoob/ebidsystem/backend/controllers"
 	"github.com/champNoob/ebidsystem/backend/models"
 	"github.com/champNoob/ebidsystem/backend/routes"
+	"github.com/user2083251241/ebidsystem/middleware"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -35,16 +36,18 @@ func main() {
 	if err := db.AutoMigrate(
 		&models.User{},
 		&models.Order{},
-		&models.Stock{},
+		// &models.Stock{},
+		&models.SellerSalesAuthorization{},
 	); err != nil {
 		log.Fatalf("Database migration failed: %v", err)
 	}
 	// 初始化Fiber应用：
 	app := fiber.New()
 	// 注册中间件：
-	app.Use(logger.New())  // 请求日志
-	app.Use(recover.New()) // 异常恢复
-	app.Use(cors.New(cors.Config{
+	app.Use(logger.New())                 //请求日志
+	app.Use(recover.New())                //异常恢复
+	app.Use(middleware.LoggingMiddleware) //自定义日志中间件
+	app.Use(cors.New(cors.Config{         //跨域请求
 		AllowOrigins: "*", // 允许所有来源
 		AllowMethods: "GET,POST,PUT,DELETE",
 	}))

@@ -3,44 +3,54 @@ package routes
 import (
 	"github.com/champNoob/ebidsystem/backend/config"
 	"github.com/champNoob/ebidsystem/backend/controllers"
+	"github.com/champNoob/ebidsystem/backend/middleware"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5" // 添加 JWT 包导入
 )
 
 func SetupRoutes(app *fiber.App) {
-	// 公开路由
+	// 公共路由：
 	public := app.Group("/api")
 	{
 		public.Post("/register", controllers.Register)
 		public.Post("/login", controllers.Login)
 	}
-
-	// JWT 中间件
+	// JWT 中间件初始化：
 	jwtMiddleware := jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{
 			Key: []byte(config.Get("JWT_SECRET")),
 		},
 	})
-
-	// 需要认证的路由
+	// 认证路由组：
 	authenticated := app.Group("/api", jwtMiddleware)
 	{
-		authenticated.Post("/orders", controllers.CreateOrder)
-		authenticated.Get("/orders", controllers.GetOrders)
-		authenticated.Post("/orders/cancel", TraderOnly, controllers.CancelOrder) // 在此处添加路由
+		// 卖家角色路由组：
+		seller := authenticated.Group("/seller", middleware.SellerOnly)
+		{
+			seller.Post("/orders", controllers.CreateSellOrder)         // 创建卖出订单
+			seller.Put("/orders/:id", controllers.UpdateOrder)          // 修改订单
+			seller.Post("/orders/:id/cancel", controllers.CancelOrder)  // 取消订单
+			seller.Get("/orders", controllers.GetSellerOrders)          // 查看卖家订单
+			seller.Post("/authorize/sales", controllers.AuthorizeSales) // 授权销售
+		}
+		// 销售角色路由组：
+		sales := authenticated.Group("/sales", middleware.SalesOnly)
+		{
+			sales.Get("/orders", controllers.GetAuthorizedOrders)     // 查看已授权订单
+			sales.Post("/drafts", controllers.CreateDraftOrder)       // 创建订单草稿
+			sales.Put("/drafts/:id", controllers.UpdateDraftOrder)    // 修改草稿
+			sales.Post("/drafts/:id/submit", controllers.SubmitDraft) // 提交草稿
+		}
+		// 客户角色路由组：
+		client := authenticated.Group("/client")
+		{
+			client.Post("/orders", controllers.CreateBuyOrder) // 创建买入订单
+			client.Get("/orders", controllers.GetClientOrders) // 查看客户订单
+		}
+		// 交易员角色路由组：
+		trader := authenticated.Group("/trader", middleware.TraderOnly)
+		{
+			trader.Get("/orders", controllers.GetAllOrders) // 查看所有订单
+		}
 	}
-}
-
-// 检查用户是否为交易员
-func TraderOnly(c *fiber.Ctx) error {
-	// 从 JWT 中提取角色
-	token := c.Locals("user").(*jwt.Token)
-	claims := token.Claims.(jwt.MapClaims)
-	role := claims["role"].(string)
-
-	if role != "trader" {
-		return c.Status(403).JSON(fiber.Map{"error": "仅交易员可执行此操作"})
-	}
-	return c.Next()
 }

@@ -125,3 +125,18 @@ func Login(c *fiber.Ctx) error {
 		"token": tokenString,
 	})
 }
+
+// ========================== 用户注销 ==========================
+// 注销逻辑（软删除）：
+func DeleteUser(c *fiber.Ctx) error {
+	// 获取用户 ID:
+	token := c.Locals("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userID := uint(claims["user_id"].(float64))
+	// 标记用户为已删除：
+	if err := db.Model(&models.User{}).Where("id = ?", userID).Update("is_deleted", true).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "注销失败"})
+	}
+	// 返回成功信息：
+	return c.JSON(fiber.Map{"message": "用户已注销"})
+}
