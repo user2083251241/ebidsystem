@@ -52,7 +52,7 @@
       const handleLogin = async () => {
         try {
           errorMessage.value = '';
-          const response = await axios.post('http://localhost:3000/api/login', {
+          const response = await axios.post('https://0125f20e-3482-4036-9bbd-f59f07ebd3f4.mock.pstmn.io/login', {
             username: username.value,
             password: password.value
           });
@@ -61,13 +61,13 @@
             // 保存 token 到 localStorage
             localStorage.setItem('token', response.data.token);
             // 保存用户信息
-            localStorage.setItem('user', JSON.stringify(response.data.user));
+            //localStorage.setItem('user', JSON.stringify(response.data.user));
             
             // 设置 axios 默认 headers
             axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
             
             // 登录成功后跳转到首页
-            router.push('/');
+            router.push('/main');
           }
         } catch (error) {
           console.error('登录失败:', error);
