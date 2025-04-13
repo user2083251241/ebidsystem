@@ -47,8 +47,9 @@ func CreateBuyOrder(c *fiber.Ctx) error {
 func GetClientOrders(c *fiber.Ctx) error {
 	//查询所有未取消的卖家订单（隐藏卖家ID）：
 	var orders []models.Order
-	if err := db.Where("direction = 'sell' AND status NOT IN ('cancelled', 'filled')").
+	if err := db.Model(&models.Order{}).
 		Select("id, symbol, quantity, price, order_type, created_at"). //排除敏感字段
+		Where("direction = 'sell' AND status NOT IN ('cancelled', 'filled')").
 		Find(&orders).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "查询订单失败"})
 	}

@@ -1,11 +1,13 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/champNoob/ebidsystem/backend/models"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 // 卖家创建卖出订单：
@@ -60,10 +62,18 @@ func UpdateOrder(c *fiber.Ctx) error {
 	}
 
 	var order models.Order
-	// 权限和内容判断：
-	if err := db.Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "订单不存在或无权修改"})
+	// 检查订单是否存在：
+	if err := db.Where("id = ?", orderID).First(&order).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(404).JSON(fiber.Map{"error": "订单不存在"})
+		}
+		return c.Status(500).JSON(fiber.Map{"error": "查询订单失败"})
 	}
+	// 检查订单归属权：
+	if order.UserID != userID {
+		return c.Status(403).JSON(fiber.Map{"error": "无权操作此订单"})
+	}
+	// 检查订单状态：
 	if order.Status == "cancelled" {
 		return c.Status(400).JSON(fiber.Map{"error": "已取消的订单不可修改"})
 	}
@@ -95,10 +105,17 @@ func CancelOrder(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(401).JSON(fiber.Map{"error": err.Error()})
 	}
-	// 查询订单（包括已软删除的记录）：
 	var order models.Order
-	if err := db.Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "订单不存在或无权操作"})
+	// 检查订单是否存在：
+	if err := db.Where("id = ?", orderID).First(&order).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(404).JSON(fiber.Map{"error": "订单不存在"})
+		}
+		return c.Status(500).JSON(fiber.Map{"error": "查询订单失败"})
+	}
+	// 检查订单归属权：
+	if order.UserID != userID {
+		return c.Status(403).JSON(fiber.Map{"error": "无权操作此订单"})
 	}
 	// 检查订单状态：
 	if order.Status == "cancelled" {
@@ -129,14 +146,14 @@ func BatchCancelOrders(c *fiber.Ctx) error {
 	}
 	var req BatchCancelRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "请求格式错误"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "请求格式错误"})
 	}
-	// 从 JWT 中获取卖家 ID:
+	// 获取当前用户 ID：
 	userID, err := getCurrentUserID(c)
 	if err != nil {
-		return c.Status(401).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
 	}
-	// 开启事务：
+	// 开启事物：
 	tx := db.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -146,22 +163,43 @@ func BatchCancelOrders(c *fiber.Ctx) error {
 	// 检查每个订单状态：
 	for _, orderID := range req.OrderIDs {
 		var order models.Order
-		if err := tx.Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error; err != nil {
+		// 检查订单是否存在：
+		if err := tx.Where("id = ?", orderID).First(&order).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				tx.Rollback()
+				return c.Status(404).JSON(fiber.Map{
+					"error": fmt.Sprintf("订单 %d 不存在", orderID),
+				})
+			}
 			tx.Rollback()
-			return c.Status(404).JSON(fiber.Map{"error": fmt.Sprintf("订单 %d 不存在或无权操作", orderID)})
+			return c.Status(500).JSON(fiber.Map{"error": "查询订单失败"})
 		}
+		// 检查订单归属权：
+		if order.UserID != userID {
+			tx.Rollback()
+			return c.Status(403).JSON(fiber.Map{
+				"error": fmt.Sprintf("订单 %d 无权操作", orderID),
+			})
+		}
+		// 检查订单状态：
 		if order.Status == "cancelled" {
 			tx.Rollback()
-			return c.Status(400).JSON(fiber.Map{"error": fmt.Sprintf("订单 %d 已取消，不可重复操作", orderID)})
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": fmt.Sprintf("订单 %d 已取消，不可重复操作", orderID),
+			})
 		}
 	}
-	// 批量更新：
+	// 批量软删除并更新状态：
 	if err := tx.Model(&models.Order{}).
 		Where("user_id = ? AND id IN ?", userID, req.OrderIDs).
-		Update("status", "cancelled").Error; err != nil {
+		Updates(map[string]interface{}{
+			"deleted_at": gorm.Expr("CURRENT_TIMESTAMP"),
+			"status":     "cancelled",
+		}).Error; err != nil {
 		tx.Rollback()
-		return c.Status(500).JSON(fiber.Map{"error": "批量取消失败"})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "批量取消失败"})
 	}
+
 	tx.Commit()
 	return c.JSON(fiber.Map{"message": "批量取消成功"})
 }

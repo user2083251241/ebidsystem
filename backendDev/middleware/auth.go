@@ -5,7 +5,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// 检查用户是否为卖家
+// 检查用户是否为卖家：
 func SellerOnly(c *fiber.Ctx) error {
 	token := c.Locals("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
@@ -16,7 +16,7 @@ func SellerOnly(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-// 检查用户是否为销售
+// 检查用户是否为销售：
 func SalesOnly(c *fiber.Ctx) error {
 	token := c.Locals("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
@@ -27,7 +27,18 @@ func SalesOnly(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-// 检查用户是否为交易员
+// 检查用户是否为客户：
+func ClientOnly(c *fiber.Ctx) error {
+	token := c.Locals("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	role := claims["role"].(string)
+	if role != "client" {
+		return c.Status(403).JSON(fiber.Map{"error": "仅客户可执行此操作"})
+	}
+	return c.Next()
+}
+
+// 检查用户是否为交易员：
 func TraderOnly(c *fiber.Ctx) error {
 	token := c.Locals("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)

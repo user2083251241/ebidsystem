@@ -53,7 +53,7 @@ func SetupRoutes(app *fiber.App) {
 			sales.Post("/drafts/:id/submit", controllers.SubmitDraft) // 提交草稿
 		}
 		// 客户角色路由组：
-		client := authenticated.Group("/client")
+		client := authenticated.Group("/client", middleware.ClientOnly)
 		{
 			client.Get("/orders", controllers.GetClientOrders)         //查看匿名处理的卖方订单
 			client.Post("/orders/:id/buy", controllers.CreateBuyOrder) //对已有的卖方订单创建自己的买入订单
