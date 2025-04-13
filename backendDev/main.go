@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/champNoob/ebidsystem/backend/config"
 	"github.com/champNoob/ebidsystem/backend/controllers"
 	"github.com/champNoob/ebidsystem/backend/models"
 	"github.com/champNoob/ebidsystem/backend/routes"
 	"github.com/user2083251241/ebidsystem/middleware"
+	"github.com/user2083251241/ebidsystem/services"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -55,6 +57,16 @@ func main() {
 	controllers.InitDB(db)
 	// 注册路由：
 	routes.SetupRoutes(app)
+	// 启动撮合引擎：
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		for {
+			<-ticker.C
+			if err := services.MatchOrders(db, 10*time.Minute, 0.0001); err != nil {
+				log.Printf("撮合引擎错误: %v", err)
+			}
+		}
+	}()
 	// 启动服务器：
 	port := os.Getenv("PORT")
 	if port == "" {

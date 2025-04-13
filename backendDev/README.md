@@ -182,4 +182,84 @@ authenticated := app.Group("/api", jwtMiddleware)
 
    在 `trades` 表中插入成交记录，包含成交价、数量、时间等
 
+### 关键功能点
+
+```text
++---------------------+------------------------------------------------------+
+|       功能点        |                       说明                         |
++---------------------+------------------------------------------------------+
+| 市价单处理逻辑      | 市价买单以最优卖价成交，市价卖单以最优买价成交         |
+| 限价单时间窗口      | 通过matchInterval参数控制限价单的有效期                |
+| 浮点数精度容差      | 通过priceTolerance解决浮点数计算精度问题               |
+| 内存状态管理        | 在内存中更新数量，减少数据库查询次数                   |
+| 订单状态原子更新    | 使用GORM的Select+Updates确保只更新指定字段             |
+| 成交记录审计        | 生成完整的成交记录，包含时间戳和价格详情               |
++---------------------+------------------------------------------------------+
+```
+
+### 运行时序图
+
+```mermaid
+sequenceDiagram
+    participant T as 定时任务
+    participant M as MatchOrders()
+    participant DB as 数据库
+    participant B as 买入订单
+    participant S as 卖出订单
+
+    T->>M: 每5秒触发一次
+    M->>DB: 查询所有pending的buy_orders
+    DB-->>M: 返回buy_orders列表
+    M->>DB: 查询所有pending的sell_orders
+    DB-->>M: 返回sell_orders列表
+
+    loop 撮合循环
+        M->>B: 取最高价买单
+        M->>S: 取最低价卖单
+        alt 价格匹配?
+            M->>DB: 开启事务
+            M->>DB: 更新订单状态
+            M->>DB: 插入trade记录
+            DB-->>M: 事务提交结果
+        else 不匹配
+            M->>S: 尝试下一个卖单
+        end
+    end
+```
+
+### 函数调用关系
+
+```txt
+matching.go
+├── MatchOrders (入口函数)主流程控制，协调各子函数
+│   ├── isMatchable (匹配检查)检查价格/标的匹配性
+│   ├── determineExecutionPrice (定价逻辑)根据订单类型确定成交价
+│   └── updateOrder (状态更新)原子化更新订单状态
+└── min (辅助函数)返回较小值，一辅助计算成交量
+```
+
 ---
+
+## 设计思想
+
+### RESTful API 设计
+
+遵循 RESTful API 设计原则，将资源路径与 HTTP 方法对应，实现清晰的资源操作。
+
+### 中间件设计
+
+通过中间件实现权限控制、日志记录等功能，提高代码复用性和可维护性。
+
+### 环境变量管理
+
+使用 .env 文件管理环境变量，方便在不同环境下配置。
+
+### SoC 职责分离原则
+
+将不同职责的代码分离到不同的包中，实现单一职责原则，提高代码的可维护性和可扩展性。
+
+#### controller-service-model
+
+- controller：处理 HTTP 请求，调用 service 层逻辑
+- service：实现业务逻辑，调用 model 层操作数据库
+- model：定义数据模型，提供数据库操作方法
