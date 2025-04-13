@@ -6,20 +6,50 @@
         <div class="main-content">
           <p>Main area</p>
           <button class="toggle-sidebar-button" @click="toggleSidebar">&#9776;</button>
-          <TableComponent />
+          <!-- <TableComponent /> -->
+          <component :is="currentComponent"></component>
         </div>
       </div>
     </div>
   </template>
   
   <script>
+  import { ref, onMounted } from 'vue';
   import Sidebar from './Sidebar.vue';
   import TableComponent from './TableComponent.vue';
+  import ClientTableComponent from './ClientTableComponent.vue';
+  //import clienttest from './clienttest.vue';
+
   
   export default {
     components: {
       Sidebar,
-      TableComponent
+      TableComponent,
+      ClientTableComponent,
+      //clienttest
+    },
+
+    setup() {
+      //const role = ref(localStorage.getItem('role'));
+      const user = ref (null);
+      const currentComponent = ref(null);
+
+      onMounted(() => {
+      // 从 localStorage 中获取用户信息
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        user.value = JSON.parse(storedUser);
+      }
+
+      // 根据用户角色设置当前组件
+      if (user.value && user.value.role === 'seller') {
+        currentComponent.value = TableComponent;
+      } else if (user.value && user.value.role === 'client') {
+        currentComponent.value = ClientTableComponent;//ClientTableComponent
+      }
+    });
+
+      return { user, currentComponent }
     },
     data() {
       return {

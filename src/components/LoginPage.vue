@@ -45,6 +45,7 @@
       // 定义响应式数据
       const username = ref('');
       const password = ref('');
+      const role = ref('');
       const router = useRouter();
       const errorMessage = ref('');
   
@@ -62,8 +63,8 @@
             localStorage.setItem('token', response.data.token);
             // 保存用户信息
             localStorage.setItem('user', JSON.stringify({
-        username: username.value,
-        //role: role.value
+             username: username.value,
+             role: response.data.role,
           }));
         // //JSON.stringify(response.data.user)
             
@@ -71,6 +72,7 @@
             axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
             
             // 登录成功后跳转到首页
+            
             router.push('/main');
           }
         } catch (error) {
@@ -82,6 +84,7 @@
       return {
         username,
         password,
+        role,
         errorMessage,
         handleLogin,
       };

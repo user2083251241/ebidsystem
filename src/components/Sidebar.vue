@@ -18,6 +18,10 @@ import { ref, onMounted } from 'vue';
 
   export default {
     name: 'Sidebar',
+    // setup() {
+    //   const user = inject('user');
+    //   return { user }
+    // }
     setup() {
     const user = ref(null);
 
@@ -27,7 +31,7 @@ import { ref, onMounted } from 'vue';
         user.value = JSON.parse(storedUser);
       }
     });
-
+    
     return {
       user
     };

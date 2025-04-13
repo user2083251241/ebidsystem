@@ -66,6 +66,7 @@ export default {
   },
   async created() {
     await this.fetchUserProducts();
+    console.log('TableComponent created');
   },
   methods: {
     async fetchUserProducts() {
@@ -114,7 +115,7 @@ export default {
       }
     },
     formatDate(dateString) {
-      if (!dateString) return '';
+      if (!dateString) return '/';
       const date = new Date(dateString);
       return date.toLocaleString('zh-CN', {
         year: 'numeric',
