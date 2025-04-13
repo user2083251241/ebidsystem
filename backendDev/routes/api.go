@@ -6,9 +6,17 @@ import (
 	"github.com/champNoob/ebidsystem/backend/middleware"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func SetupRoutes(app *fiber.App) {
+	// 添加CORS中间件（必须在路由定义前调用）
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://192.168.1.100:8080", // 替换为前端实际IP和端口
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		AllowMethods:     "GET, POST, PUT, DELETE, OPTIONS",
+		AllowCredentials: true, // 允许携带Cookie或Authorization头
+	}))
 	// 公共路由：
 	public := app.Group("/api")
 	{

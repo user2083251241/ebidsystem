@@ -62,7 +62,7 @@ func main() {
 	}
 	// 输出启动信息：
 	fmt.Printf("🚀 Server started on port %s\n", port)
-	if err := app.Listen(":" + port); err != nil {
+	if err := app.Listen("0.0.0.0:" + port); err != nil {
 		log.Fatalf("Server startup failed: %v", err)
 	}
 }

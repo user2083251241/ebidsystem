@@ -6,14 +6,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func getCurrentUserID(c *fiber.Ctx) (userID uint) {
-	token := c.Locals("user").(*jwt.Token)     //获取 token
-	claims := token.Claims.(jwt.MapClaims)     //获取 claims
-	userIDFloat := claims["user_id"].(float64) //先转为 float64
-	userID = uint(userIDFloat)                 //再转为 uint
-	return
-}
-
 // 卖家创建卖出订单：
 func CreateSellOrder(c *fiber.Ctx) error {
 	type SellOrderRequest struct { //定义请求体
@@ -79,7 +71,7 @@ func UpdateOrder(c *fiber.Ctx) error {
 	return c.JSON(order)
 }
 
-// 单个撤单（实际为撤单，使用 DELETE 方法）：
+// 单个撤单（软删除，使用 DELETE 方法）：
 func CancelOrder(c *fiber.Ctx) error {
 	orderID := c.Params("id")
 	userID := getCurrentUserID(c)
@@ -93,7 +85,7 @@ func CancelOrder(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "订单已取消"})
 }
 
-// 批量撤单（使用 POST 方法）：
+// 批量撤单（软删除，使用 POST 方法）：
 func BatchCancelOrders(c *fiber.Ctx) error {
 	type BatchCancelRequest struct {
 		OrderIDs []uint `json:"order_ids"`
