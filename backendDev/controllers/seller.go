@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+
 	"github.com/champNoob/ebidsystem/backend/models"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -18,7 +20,11 @@ func CreateSellOrder(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "请求格式错误"})
 	}
-	userID := getCurrentUserID(c) //从 JWT 中获取卖家 ID
+	// 从 JWT 中获取卖家 ID:
+	userID, err := getCurrentUserID(c)
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"error": "从 JWT 中获取卖家 ID 失败"})
+	}
 	// 校验数量：
 	if req.Quantity <= 0 {
 		return c.Status(400).JSON(fiber.Map{"error": "数量必须大于0"})
@@ -47,18 +53,28 @@ func CreateSellOrder(c *fiber.Ctx) error {
 // 更新订单
 func UpdateOrder(c *fiber.Ctx) error {
 	orderID := c.Params("id")
-	userID := getCurrentUserID(c)
-	var req struct {
-		Quantity int     `json:"quantity"`
-		Price    float64 `json:"price"`
+	// 从 JWT 中获取卖家 ID:
+	userID, err := getCurrentUserID(c)
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"error": err.Error()})
 	}
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "请求格式错误"})
-	}
+
 	var order models.Order
 	// 权限和内容判断：
 	if err := db.Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "订单不存在或无权修改"})
+	}
+	if order.Status == "cancelled" {
+		return c.Status(400).JSON(fiber.Map{"error": "已取消的订单不可修改"})
+	}
+	// 定义请求体：
+	var req struct {
+		Quantity int     `json:"quantity"`
+		Price    float64 `json:"price"`
+	}
+	// 判断请求体格式：
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "请求格式错误"})
 	}
 	// 执行更新：
 	if err := db.Model(&order).Updates(models.Order{
@@ -74,14 +90,36 @@ func UpdateOrder(c *fiber.Ctx) error {
 // 单个撤单（软删除，使用 DELETE 方法）：
 func CancelOrder(c *fiber.Ctx) error {
 	orderID := c.Params("id")
-	userID := getCurrentUserID(c)
+	// 从 JWT 中获取卖家 ID:
+	userID, err := getCurrentUserID(c)
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	var order models.Order
+	// 查询订单（包括已软删除的记录）：
 	if err := db.Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "订单不存在或无权操作"})
 	}
-	if err := db.Model(&order).Update("status", "cancelled").Error; err != nil {
+	// 检查订单状态：
+	if order.Status == "cancelled" {
+		return c.Status(400).JSON(fiber.Map{"error": "订单已取消，不可重复操作"})
+	}
+	// 添加事物：
+	tx := db.Begin()
+	// 执行软删除（设置 DeletedAt）：
+	if err := db.Delete(&order).Error; err != nil {
+		tx.Rollback() //回滚事务
 		return c.Status(500).JSON(fiber.Map{"error": "取消失败"})
 	}
+	// 更新状态为 "cancelled"（需使用 Unscoped 更新软删除记录）：
+	if err := db.Unscoped().Model(&order).Update("status", "cancelled").Error; err != nil {
+		tx.Rollback() //回滚事务
+		return c.Status(500).JSON(fiber.Map{"error": "状态更新失败"})
+	}
+	// 提交事务：
+	tx.Commit()
+	// 返回成功信息：
 	return c.JSON(fiber.Map{"message": "订单已取消"})
 }
 
@@ -94,7 +132,11 @@ func BatchCancelOrders(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "请求格式错误"})
 	}
-	userID := getCurrentUserID(c)
+	// 从 JWT 中获取卖家 ID:
+	userID, err := getCurrentUserID(c)
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"error": err.Error()})
+	}
 	// 开启事务：
 	tx := db.Begin()
 	defer func() {
@@ -102,6 +144,18 @@ func BatchCancelOrders(c *fiber.Ctx) error {
 			tx.Rollback()
 		}
 	}()
+	// 检查每个订单状态：
+	for _, orderID := range req.OrderIDs {
+		var order models.Order
+		if err := tx.Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error; err != nil {
+			tx.Rollback()
+			return c.Status(404).JSON(fiber.Map{"error": fmt.Sprintf("订单 %d 不存在或无权操作", orderID)})
+		}
+		if order.Status == "cancelled" {
+			tx.Rollback()
+			return c.Status(400).JSON(fiber.Map{"error": fmt.Sprintf("订单 %d 已取消，不可重复操作", orderID)})
+		}
+	}
 	// 批量更新：
 	if err := tx.Model(&models.Order{}).
 		Where("user_id = ? AND id IN ?", userID, req.OrderIDs).

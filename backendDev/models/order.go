@@ -12,7 +12,7 @@ type Order struct {
 	Price        float64 `gorm:"type:decimal(10,2)"` //股票价格（市价单可为空）
 	OrderType    string  `gorm:"not null"`           //market, limit
 	Direction    string  `gorm:"not null"`           //方向: buy/sell
-	Status       string  `gorm:"default:'draft'"`    //状态：draft/pending/filled/cancelled
+	Status       string  `gorm:"default:'pending'"`  //状态：draft/pending/filled/cancelled
 	DraftBySales uint    //销售草稿的销售用户ID（0表示非草稿）
 	ApprovedBy   uint    //卖家批准用户ID
 }
