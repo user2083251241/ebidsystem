@@ -95,9 +95,8 @@ func CancelOrder(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(401).JSON(fiber.Map{"error": err.Error()})
 	}
-
-	var order models.Order
 	// 查询订单（包括已软删除的记录）：
+	var order models.Order
 	if err := db.Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "订单不存在或无权操作"})
 	}
@@ -167,10 +166,14 @@ func BatchCancelOrders(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "批量取消成功"})
 }
 
-// 卖家查看自己订单：
+// 卖家查看自己订单（隐藏软删除）：
 func GetSellerOrders(c *fiber.Ctx) error {
-	userID := uint(c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)["user_id"].(float64))
+	userID, err := getCurrentUserID(c)
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"error": err.Error()})
+	}
 	var orders []models.Order
+	// 默认查询会排除 DeletedAt 非空的记录
 	if err := db.Where("user_id = ?", userID).Find(&orders).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "查询订单失败"})
 	}

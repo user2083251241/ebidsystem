@@ -85,37 +85,34 @@ func Login(c *fiber.Ctx) error {
 			"error": "Invalid request format",
 		})
 	}
-
-	// 查询用户是否存在
+	// 查询用户是否存在：
 	var user models.User
 	if err := db.Where("username = ?", req.Username).First(&user).Error; err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "Invalid username or password",
 		})
 	}
-
-	// 验证密码
+	// 验证密码：
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "Invalid username or password",
 		})
 	}
-
-	// 生成 JWT
+	// 生成 JWT:
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID,
 		"role":    user.Role,
 		"exp":     time.Now().Add(time.Hour * 72).Unix(), // 过期时间 3 天
 	})
 
-	// 签名令牌
+	// 签名令牌：
 	tokenString, err := token.SignedString([]byte(config.Get("JWT_SECRET")))
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{ //500 服务器错误
 			"error": "Failed to generate token",
 		})
 	}
-
+	// 返回 JWT:
 	return c.JSON(fiber.Map{
 		"token": tokenString,
 	})
