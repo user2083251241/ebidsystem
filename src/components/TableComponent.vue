@@ -13,7 +13,7 @@
           <td v-for="(cell, cellIndex) in row" :key="cellIndex">{{ cell }}</td>
           <td>
             <button @click="confirmDelete(rowIndex)">Delete</button>
-            <button @click="modifyOrder(rowIndex)">Modify</button>
+            <button @click="showModifyModal(rowIndex)">Modify</button>
           </td>
         </tr>
       </tbody>
@@ -28,17 +28,27 @@
       @confirm="deleteOrder(selectedIndex)"
       @cancel="closeConfirmModal"
     />
+    <ModifyModal
+      :isVisible="isModifyModalVisible"
+      title="Modify Order"
+      :initialQuantity="selectedOrderQuantity"
+      :initialPrice="selectedOrderPrice"
+      @submit="modifyOrderSubmit"
+      @close="closeModifyModal"
+    />
   </div>
 </template>
 
 <script>
 import axios from 'axios';
 import ConfirmModal from './ConfirmModal.vue';
+import ModifyModal from './ModifyModal.vue';
 
 export default {
   name: 'TableComponent',
   components: {
-    ConfirmModal
+    ConfirmModal,
+    ModifyModal
   },
   data() {
     return {
@@ -47,7 +57,11 @@ export default {
       loading: true,
       error: null,
       isConfirmModalVisible: false,
-      selectedIndex: -1
+      selectedIndex: -1,
+      isModifyModalVisible: false,
+      selectedOrderQuantity: null,
+      selectedOrderPrice: null,
+      selectedOrderId: null
     };
   },
   async created() {
@@ -66,7 +80,7 @@ export default {
         }
 
         // 发送请求获取用户商品列表
-        const response = await axios.get('/products', {
+        const response = await axios.get('/seller/orders', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -130,34 +144,84 @@ export default {
         }
 
         // 发送 DELETE 请求
-        const response = await axios.delete('/DeleteOrder', {
+        const response = await axios.delete(`/seller/orders/${orderId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           },
-          data: {
-            orderId: index
-      }
+         // data: {
+          //  orderId: orderId
+         // }
         });
 
         // 检查响应状态码
-        if (response.status === 201) {
-          console.log('Order deleted successfully');
+        if (response.status === 200) {
+          alert(response.data.message);
+          //console.log('Order deleted successfully');
           // 从 tableData 中删除该订单
-          this.tableData.splice(index, 1);
+          //this.tableData.splice(index, 1);
         } else {
-          console.error('Failed to delete order');
+          alert('Failed to delete order');
+          //console.error('Failed to delete order');
         }
       } catch (error) {
-        console.error('Error deleting order:', error);
+        alert(error);
+        //console.error
+        //console.error('Error deleting order:', error);
         console.error('Failed to delete order');
       } finally {
         this.closeConfirmModal();
       }
     },
-    modifyOrder(index) {
-      // 修改订单的逻辑
-      console.log('Modifying order at index:', index);
-      // 这里可以弹出一个模态框，让用户输入新的订单信息
+    showModifyModal(index) {
+      this.selectedIndex = index;
+      const order = this.tableData[index];
+      this.selectedOrderQuantity = order[6]; // 假设 Quantity 是第 7 列
+      this.selectedOrderPrice = order[7]; // 假设 Price 是第 8 列
+      this.selectedOrderId = order[0]; // 假设订单 ID 是第 1 列
+      this.isModifyModalVisible = true;
+    },
+    closeModifyModal() {
+      this.isModifyModalVisible = false;
+    },
+    async modifyOrderSubmit({ quantity, price }) {
+      try {
+        // 从 localStorage 获取 token
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Please login first');
+        }
+
+        // 获取用户 ID
+        const userId = this.tableData[this.selectedIndex][4]; // 假设用户 ID 是第 5 列
+
+        // 发送 POST 请求
+        const response = await axios.put(`/seller/orders/${this.selectedOrderId}`, {
+          quantity: quantity,
+          price: price
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        // 检查响应状态码
+        if (response.status === 200) {
+          alert('Modify successful! ' + response.data.message);
+          //console.log('Order modified successfully');
+          // 更新 tableData 中的订单信息
+          this.tableData[this.selectedIndex][6] = quantity; // 更新 Quantity
+          this.tableData[this.selectedIndex][7] = price; // 更新 Price
+        } else {
+          console.error('Failed to modify order');
+          //alert(response.data.message);
+        }
+      } catch (error) {
+        alert(error);
+        //console.error('Error modifying order:', error);
+        console.error('Failed to modify order');
+      } finally {
+        this.closeModifyModal();
+      }
     },
     goToCreate() {
       this.$router.push('/create');

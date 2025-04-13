@@ -16,7 +16,7 @@
       </div>
       <div class="form-group">
         <label for="orderType">Order Type</label>
-        <select id="orderType" v-model="orderType" required>
+        <select id="orderType" v-model="type" required>
           <option value="market">Market</option>
           <option value="limit">Limit</option>
         </select>
@@ -24,7 +24,7 @@
       <div class="form-group">
         <label for="direction">Direction</label>
         <select id="direction" v-model="direction" required>
-          <option value="buy">Buy</option>
+          <!-- <option value="buy">Buy</option> -->
           <option value="sell">Sell</option>
         </select>
       </div>
@@ -43,12 +43,13 @@ export default {
       symbol: '',
       quantity: '',
       price: '',
-      orderType: 'market',
-      direction: 'buy'
+      type: String(this.type), // 确保是字符串类型,
+      direction: 'sell'
     };
   },
   methods: {
     async createOrder() {
+      console.log(this.orderType); // 检查orderType的值
       try {
         // 从localStorage获取token
         const token = localStorage.getItem('token');
@@ -69,20 +70,20 @@ export default {
           symbol: this.symbol,
           quantity: this.quantity,
           price: this.price,
-          orderType: this.orderType,
+          type: this.type,
           direction: this.direction,
           //userID: user.id // 假设用户信息中包含用户ID
         };
 
         // 发送POST请求到后端创建订单
-        const response = await axios.post('/CreateOrder', orderData, {
+        const response = await axios.post('/seller/orders', orderData, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
 
         // 处理成功响应
-        if (response.status === 201) {
+        if (response.status === 200) {
           alert('Order created successfully');
           console.log('Order created:', response.data);
         } else {
@@ -92,6 +93,7 @@ export default {
         console.error('Create order error:', error);
         alert('Order creation failed: ' + error.response?.data?.message || 'Please check your input and try again');
       }
+      console.log(this.type); // 检查orderType的值
     }
   }
 };
