@@ -38,8 +38,8 @@
       <div class="form-group">
         <label for="role">Role</label>
         <select id="role" v-model="role" required>
-          <option value="client">seller</option>
-          <option value="sales">sales</option>
+          <option value="seller">seller</option>
+          <option value="client">client</option>
           <option value="trader">trader</option>
         </select>
       </div>
