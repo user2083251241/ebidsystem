@@ -13,81 +13,64 @@ echo UAC.ShellExecute "%~s0", "", "", "runas", 1 >> "%temp%\getadmin.vbs"
 exit /B
 
 :main
-cd /d "%~dp0"
-
-:: ============== 全局配置 ==============
+:: ============== 基础配置 ==============
+set "PROJECT_ROOT=%~dp0"
 set "PROJECT_NAME=ebidsystem"
 set "EXE_NAME=%PROJECT_NAME%.exe"
-set "PORT=3000"
-set "ENV_FILE=.env"
-set "ROOT_DIR=%~dp0"
-set "BIN_DIR=%ROOT_DIR%bin"
-set "LOG_DIR=%ROOT_DIR%bin\logs"
-set "MATCH_LOG_DIR=%ROOT_DIR%bin\matchLog"
+set "BIN_DIR=%PROJECT_ROOT%bin"
+set "LOG_DIR=%PROJECT_ROOT%bin\logs"
+set "MATCH_LOG_DIR=%PROJECT_ROOT%bin\matchLog"
 
-:: ============== 初始化目录结构 ==============
+:: ============== 初始化目录 ==============
 echo [%TIME%] 初始化目录结构...
-if not exist "%BIN_DIR%" mkdir "%BIN_DIR%"
-if not exist "%LOG_DIR%" mkdir "%LOG_DIR%"
-if not exist "%MATCH_LOG_DIR%" mkdir "%MATCH_LOG_DIR%"
-del /Q "%LOG_DIR%\*.log" "%MATCH_LOG_DIR%\*.txt" 2>nul
+mkdir "%BIN_DIR%" 2>nul
+mkdir "%LOG_DIR%" 2>nul
+mkdir "%MATCH_LOG_DIR%" 2>nul
+del "%LOG_DIR%\*.log" "%MATCH_LOG_DIR%\*.txt" 2>nul
 
-:: ============== 编译项目 ==============
-echo [%TIME%] 正在编译项目...
-go build -o "%BIN_DIR%\%EXE_NAME%" main.go
-if %errorlevel% neq 0 (
-    echo [%TIME%] [错误] 编译失败，请检查以下可能原因：
-    echo 1. Go代码语法错误
-    echo 2. 依赖未安装（运行 go mod tidy）
-    pause
-    exit /b 1
-)
-
-:: ============== 环境文件处理 ==============
-if exist "%ENV_FILE%" (
-    copy "%ENV_FILE%" "%BIN_DIR%\" >nul
-    echo [%TIME%] 已复制环境文件到bin目录
-) else (
-    echo [%TIME%] [警告] 未找到.env文件！
-)
-
-:: ============== 防火墙配置 ==============
-echo [%TIME%] 配置防火墙规则...
-set "EXE_PATH=%BIN_DIR%\%EXE_NAME%"
-
-netsh advfirewall firewall delete rule name="%PROJECT_NAME% Inbound" >nul 2>&1
-netsh advfirewall firewall add rule ^
-    name="%PROJECT_NAME% Inbound" ^
-    dir=in ^
-    action=allow ^
-    program="%EXE_PATH%"
+:: ============== 编译检查 ==============
+echo [%TIME%] 编译项目...
+cd /d "%PROJECT_ROOT%"
+go build -o "%BIN_DIR%\%EXE_NAME%" main.go || goto build_failed
 
 :: ============== 服务启动 ==============
-echo [%TIME%] 启动服务（端口 %PORT%）...
+echo [%TIME%] 启动服务...
 
-:: 主服务窗口（HTTP日志）
-start "EBidSystem Main Server" ^
-    cmd /k "cd /d "%BIN_DIR%" && ^
+:: 主服务窗口（带日志重定向）
+start "EBidSystem_HTTP_Service" cmd /c ^
+    "cd /d "%BIN_DIR%" && ^
     %EXE_NAME% > "%LOG_DIR%\service.log" 2>&1 & ^
-    type "%LOG_DIR%\service.log""
+    type "%LOG_DIR%\service.log" & ^
+    pause"
 
-:: 撮合日志窗口（独立）
-set "MATCH_LOG_PATH=%MATCH_LOG_DIR%\matchLog.txt"
-start "EBidSystem Matching Engine" ^
-    cmd /k "cd /d "%BIN_DIR%" && ^
-    powershell -NoExit -Command ^
-    \"Get-Content -LiteralPath '%MATCH_LOG_PATH%' -Wait -Tail 10\""
+:: 撮合日志窗口（带路径验证）
+if exist "%MATCH_LOG_DIR%\matchLog.txt" (
+    start "EBidSystem_Matching_Log" cmd /k ^
+        "cd /d "%MATCH_LOG_DIR%" && ^
+        echo 正在监视撮合日志... && ^
+        powershell -NoExit -Command ^
+        \"Get-Content -LiteralPath '%MATCH_LOG_DIR%\matchLog.txt' -Wait -Tail 10\""
+) else (
+    start "EBidSystem_Matching_Log" cmd /k ^
+        "cd /d "%MATCH_LOG_DIR%" && ^
+        echo 等待日志文件生成... && ^
+        echo 预期路径: %MATCH_LOG_DIR%\matchLog.txt && ^
+        timeout /t 30"
+)
 
-:: 状态显示
+:: 状态提示
 echo -------------------------------
-echo [服务状态]
-echo 主服务窗口标题：EBidSystem Main Server
-echo 撮合日志窗口标题：EBidSystem Matching Engine
-echo 日志文件位置：
-echo - 主日志：%LOG_DIR%\service.log
-echo - 撮合日志：%MATCH_LOG_PATH%
+echo 服务启动完成
+echo 主服务窗口: EBidSystem_HTTP_Service
+echo 撮合日志窗口: EBidSystem_Matching_Log
 echo -------------------------------
-echo 按任意键关闭本窗口（服务将继续运行）...
-pause >nul
-
+pause
 exit /b 0
+
+:build_failed
+echo [错误] 编译失败! 可能原因:
+echo 1. 未安装Go环境
+echo 2. 依赖未安装(运行 go mod tidy)
+echo 3. 代码存在语法错误
+pause
+exit /b 1
