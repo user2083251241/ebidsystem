@@ -1,7 +1,7 @@
 <template>
   <div class="modal" v-if="isVisible">
     <div class="modal-content">
-      <h2>Purchase {{ order[0] }}?</h2>
+      <h2>Purchase {{ order[1] }}?</h2>
       <form @submit.prevent="submitOrder">
         <div class="form-group">
           <label for="quantity">Quantity:</label>
@@ -9,7 +9,7 @@
             type="number"
             id="quantity"
             v-model.number="quantity"
-            :max="order[1]"
+            :max="order[2]"
             required
           />
         </div>
@@ -48,7 +48,7 @@
     },
     computed: {
       isMarketOrder() {
-        return this.order[3] === 'market';
+        return this.order[4] === 'market';
       }
     },
     // watch: {
@@ -64,7 +64,7 @@
         this.$emit('close');
       },
       async submitOrder() {
-        console.log(this.order);
+        //console.log(this.order);
         if (this.quantity > this.order[1]) {
           alert('Quantity exceeds available stock');
           return;
@@ -81,24 +81,25 @@
         }
   
         const neworder = {
-          Symbol: this.order[0],
+          ID : this.order[0],
+          //Symbol: this.order[0],
           Quantity: this.quantity,
           Price: this.price
         };
-  
+        console.log(neworder);
         try {
           const token = localStorage.getItem('token');
           if (!token) {
             throw new Error('Please login first');
           }
-  
-          const response = await axios.post('/purchase', neworder, {
+          //console.log(neworder);
+          console.log(`/client/${neworder.ID}/buy`);
+          const response = await axios.post(`/client/orders/${neworder.ID}/buy`, neworder, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
           });
-  
-          if (response.status === 201) {
+          if (response.status === 200) {
             alert('Order submitted successfully' + (response.data.message || ''));
             this.closeModal();
           } else {
@@ -107,11 +108,14 @@
         } catch (error) {
           alert(`Order submission failed: ${error.response?.data?.message || 'Unknown error'}`);
         }
+        console.log("2"+neworder);
+       this.$emit('submit-order', neworder);
+       // return neworder;
       }
     },
     mounted() {
       if (this.isMarketOrder) {
-        this.price = this.order[2];
+        this.price = this.order[3];
       }
     }
   };

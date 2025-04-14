@@ -38,12 +38,13 @@ export default {
   },
   data() {
     return {
-      headers: ['Symbol', 'Quantity', 'Price', 'OrderType', 'Status', 'Operate'],
+      headers: ['ID', 'Symbol', 'Quantity', 'Price', 'OrderType', 'Status', 'Operate'],
       tableData: [],
       isPurchaseModalOpen: false,
       selectedOrder: null,
       loading: true,
       error: null,
+      TEMP: null
     };
   },
   async created() {
@@ -63,7 +64,7 @@ export default {
         }
 
         // 发送请求获取用户商品列表
-        const response = await axios.get('/seller/orders', {
+        const response = await axios.get('/client/orders', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -74,6 +75,7 @@ export default {
         // 处理返回的数据
         if (response.data && Array.isArray(response.data)) {
           this.tableData = response.data.map(product => [
+            product.ID,
             product.Symbol,
             product.Quantity,
             product.Price,
@@ -100,24 +102,29 @@ export default {
     },
     async submitOrder(order) {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token');console.log("235"+order);
+        console.log("234"+order);
         if (!token) {
           throw new Error('Please login first');
         }
-
-        const response = await axios.post('/purchase', order, {
+        console.log("233"+order);
+        this.TEMP = order[0];
+        console.log("TEMP"+TEMP);
+        const response = await axios.post('/client/orders/buy', order, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
 
-        if (response.status === 201) {
+        if (response.status === 200) {
           alert('Order submitted successfully' + (response.data.message || ''));
           this.closePurchaseModal();
         } else {
+          console.log("250"+order);
           alert('Order submission failed' + (response.data.message || ''));
         }
       } catch (error) {
+        console.log("251"+order);
         alert(`Order submission failed: ${error.response?.data?.message || 'Unknown error'}`);
       }
     }

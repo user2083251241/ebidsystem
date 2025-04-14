@@ -39,6 +39,7 @@
   import { ref } from 'vue';
   import axios from 'axios';
   import { useRouter } from 'vue-router';
+  //import { parseToken } from '../utils/parseToken.js';//mytext\src\utils\parseToken.js
   
   export default {
     setup() {
@@ -59,11 +60,13 @@
           });
   
           if (response.data.token) {
+            //const decoded = parseToken(response.data.token);
             // 保存 token 到 localStorage
             localStorage.setItem('token', response.data.token);
             // 保存用户信息
             localStorage.setItem('user', JSON.stringify({
              username: username.value,
+             //role: decoded.role,
              role: response.data.role,
           }));
         // //JSON.stringify(response.data.user)
