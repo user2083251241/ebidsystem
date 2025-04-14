@@ -60,8 +60,8 @@ func MatchOrders(db *gorm.DB, matchInterval time.Duration, priceTolerance float6
 			fileLogger.Print(msg) // 文件输出
 		}
 	}
-	output("=== 撮合引擎启动 ===")
-	defer output("=== 撮合引擎结束 ===")
+	// output("=== 撮合引擎启动 ===")
+	// defer output("=== 撮合引擎结束 ===")
 	// ==================== 阶段1：查询待撮合订单 ====================
 	// 获取当前时间戳，用于时间优先规则
 	now := time.Now()
@@ -88,8 +88,6 @@ func MatchOrders(db *gorm.DB, matchInterval time.Duration, priceTolerance float6
 		Find(&sellOrders).Error; err != nil {
 		return fmt.Errorf("查询卖出订单失败: %v", err)
 	}
-	// 输出订单数量信息：
-	output("买入订单数量: %d, 卖出订单数量: %d", len(buyOrders), len(sellOrders))
 	// ==================== 阶段2：订单撮合处理 ====================
 	for i := 0; i < len(buyOrders); i++ {
 		buy := &buyOrders[i] // 使用指针以便直接修改
@@ -107,9 +105,11 @@ func MatchOrders(db *gorm.DB, matchInterval time.Duration, priceTolerance float6
 			if sell.Quantity <= 0 {
 				continue
 			}
-			// 输出匹配尝试信息：
-			log.Printf("尝试撮合: 买单ID=%d (价格%.2f) vs 卖单ID=%d (价格%.2f)",
-				buy.ID, buy.Price, sell.ID, sell.Price)
+			// 输出订单数量信息：
+			output("有效买入订单数量: %d, 有效卖出订单数量: %d", len(buyOrders), len(sellOrders))
+			// // 输出匹配尝试信息：
+			// log.Printf("尝试撮合: 买单ID=%d (价格%.2f) vs 卖单ID=%d (价格%.2f)",
+			// 	buy.ID, buy.Price, sell.ID, sell.Price)
 			// 检查基础匹配条件
 			if !isMatchable(buy, sell, priceTolerance) {
 				continue
@@ -157,7 +157,7 @@ func MatchOrders(db *gorm.DB, matchInterval time.Duration, priceTolerance float6
 				tx.Rollback()
 				break
 			}
-			output("撮合成功: 买单%d@%.2f -> 卖单%d@%.2f (数量%d)",
+			log.Printf("撮合成功: 买单%d@%.2f -> 卖单%d@%.2f (数量%d)",
 				buy.ID, buy.Price, sell.ID, sell.Price, executionQty)
 			// 提交事务
 			if err := tx.Commit().Error; err != nil {

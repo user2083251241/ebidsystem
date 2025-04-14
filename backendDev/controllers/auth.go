@@ -115,6 +115,7 @@ func Login(c *fiber.Ctx) error {
 	// 返回 JWT:
 	return c.JSON(fiber.Map{
 		"token": tokenString,
+		"role":  user.Role, // 返回用户角色
 	})
 }
 

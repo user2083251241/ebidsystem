@@ -60,7 +60,7 @@ func main() {
 	routes.SetupRoutes(app)
 	// 启动撮合引擎：
 	go func() {
-		ticker := time.NewTicker(5 * time.Second)
+		ticker := time.NewTicker(10 * time.Second)
 		for {
 			services.MatchOrders(db, 10*time.Minute, 0.01)
 			<-ticker.C
