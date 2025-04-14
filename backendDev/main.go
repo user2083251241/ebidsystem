@@ -40,6 +40,7 @@ func main() {
 		&models.Order{},
 		// &models.Stock{},
 		&models.SellerSalesAuthorization{},
+		&models.Trade{},
 	); err != nil {
 		log.Fatalf("Database migration failed: %v", err)
 	}
@@ -61,6 +62,7 @@ func main() {
 	go func() {
 		ticker := time.NewTicker(5 * time.Second)
 		for {
+			services.MatchOrders(db, 10*time.Minute, 0.01)
 			<-ticker.C
 			if err := services.MatchOrders(db, 10*time.Minute, 0.0001); err != nil {
 				log.Printf("撮合引擎错误: %v", err)
