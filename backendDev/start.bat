@@ -22,11 +22,10 @@ del /Q "%LOG_DIR%\matchLog\match.log" 2>nul
 :: ============== 编译 & 配置 ==============
 echo [%TIME%] 正在编译项目...
 go build -o "%BIN_DIR%\%EXE_NAME%" main.go || goto :error
-
-if exist "%ENV_FILE%" (
-    copy "%ENV_FILE%" "%BIN_DIR%\" >nul
-    echo [%TIME%] 已复制环境文件
-)
+:: if exist "%ENV_FILE%" (
+::     copy "%ENV_FILE%" "%BIN_DIR%\" >nul
+::     echo [%TIME%] 已复制环境文件
+:: )
 
 :: ============== 配置防火墙 ==============
 echo [%TIME%] 配置防火墙...

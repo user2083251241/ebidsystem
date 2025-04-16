@@ -65,4 +65,5 @@ func SetupRoutes(app *fiber.App) {
 		}
 	}
 	app.Static("/", "./static")
+	app.Static("/assets", "./static/assets")
 }

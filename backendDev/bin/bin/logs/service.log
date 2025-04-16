@@ -1,2 +1,5 @@
 00:38:08 | 200 |    215.1438ms | 127.0.0.1 | POST | /api/login | -
 00:38:31 | 409 |      3.1959ms | 127.0.0.1 | POST | /api/register | -
+00:42:32 | 200 |      57.392ms | 127.0.0.1 | POST | /api/client/orders/2/buy | -
+00:43:30 | 200 |       59.72ms | 127.0.0.1 | POST | /api/client/orders/2/buy | -
+00:44:17 | 200 |     56.3435ms | 127.0.0.1 | POST | /api/client/orders/2/buy | -
