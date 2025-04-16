@@ -57,6 +57,9 @@
 backend/
 ├── bin/                   # 编译输出目录
 │   ├── ebidsystem.exe        # 可执行文件
+│   ├── logs                  # 日志目录
+│   │   └──service.log           # 所有信息日志
+│   ├── matchLog              # 撮合逻辑日志
 │   └── .env                  # 环境变量（由根目录复制而来）
 ├── config/                # 配置管理
 │   └── config.go             # 读取环境变量
@@ -76,6 +79,7 @@ backend/
 │   ├── user.go               # 用户模型
 │   ├── order.go              # 订单模型
 │   ├── stock.go              # 股票模型（暂不实现）
+│   ├── trades.go             # 成交信息（撮合成功后）
 │   └── authorization.go      # 卖家-销售授权模型（已定义在 ./user.go 中，暂不独立出来）
 ├── routes/                # 路由定义
 │   └── api.go                # API 路由注册

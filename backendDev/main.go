@@ -47,12 +47,22 @@ func main() {
 	// 初始化Fiber应用：
 	app := fiber.New()
 	// 注册中间件：
-	app.Use(logger.New())                 //请求日志
 	app.Use(recover.New())                //异常恢复
 	app.Use(middleware.LoggingMiddleware) //自定义日志中间件
 	app.Use(cors.New(cors.Config{         //跨域请求
 		AllowOrigins: "*", // 允许所有来源
 		AllowMethods: "GET,POST,PUT,DELETE",
+	}))
+	serviceLog, _ := os.OpenFile("bin/logs/service.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	errorLog, _ := os.OpenFile("bin/logs/error.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	app.Use(logger.New(logger.Config{ //配置请求日志中间件
+		Output: serviceLog, // HTTP 请求日志输出到 service.log
+	}))
+	app.Use(recover.New(recover.Config{ //配置全局错误处理中间件
+		EnableStackTrace: true,
+		StackTraceHandler: func(c *fiber.Ctx, e interface{}) {
+			errorLog.WriteString(fmt.Sprintf("[PANIC] %v\n", e))
+		},
 	}))
 	// 依赖注入（将数据库实例传递给控制器）：
 	controllers.InitDB(db)

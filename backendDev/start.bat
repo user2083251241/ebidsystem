@@ -14,7 +14,10 @@ set LOG_DIR=bin\logs
 
 :: ============== 初始化日志目录 ==============
 if not exist "%LOG_DIR%" mkdir "%LOG_DIR%"
+if not exist "%LOG_DIR%\matchLog" mkdir "%LOG_DIR%\matchLog"
 del /Q "%LOG_DIR%\service.log" 2>nul
+del /Q "%LOG_DIR%\error.log" 2>nul
+del /Q "%LOG_DIR%\matchLog\match.log" 2>nul
 
 :: ============== 编译 & 配置 ==============
 echo [%TIME%] 正在编译项目...

@@ -28,7 +28,7 @@ func init() {
 	}
 
 	// 构建跨平台日志路径
-	logPath := filepath.Join(exeDir, "bin", "matchLog", "matchLog.txt")
+	logPath := filepath.Join(exeDir, "bin", "logs", "match.log") //撮合日志单独存储
 	if err := os.MkdirAll(filepath.Dir(logPath), 0755); err != nil {
 		log.Println("创建日志目录失败:", err)
 		return
