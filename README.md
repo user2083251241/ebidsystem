@@ -41,9 +41,9 @@ backend/
 ├── bin/                   # 编译输出目录
 │   ├── ebidsystem.exe        # 可执行文件
 │   └── logs                  # 日志目录
-│       ├── service.log    # 存放 HTTP 请求、错误日志等通用日志
-│       ├── error.log      # 单独记录错误级别的日志（可通过日志库的 Level 过滤）
-│       └── match.log      # 存放撮合引擎业务日志
+│       ├── service.log          # 存放 HTTP 请求、错误日志等通用日志
+│       ├── error.log            # 单独记录错误级别的日志（可通过日志库的 Level 过滤）
+│       └── match.log            # 存放撮合引擎业务日志
 ├── config/                # 配置管理
 │   └── config.go             # 读取环境变量
 ├── controllers/           # 控制器（处理 HTTP 请求）
