@@ -36,6 +36,7 @@
 
 ### 后端（`./backendDev`）
 
+```txt
 backend/
 ├── bin/                   # 编译输出目录
 │   ├── ebidsystem.exe        # 可执行文件
@@ -73,3 +74,44 @@ backend/
 ├── go.sum                 # 依赖校验
 ├── main.go                # 应用入口（初始化、启动服务）
 └── magefile.go            # 自动化构建文件（取得管理员权限+授权通过防火墙+编译+运行+输出日志）
+```
+
+### 前端(`./frontendDev`)
+
+```txt
+mytext/          # 项目根目录
+├── .vscode/     # VSCode 编辑器的配置文件夹
+├── node_modules/ # 项目依赖的第三方库，由 npm 或 yarn 安装
+├── public/       # 静态资源文件夹，存放公开访问的资源如图片、图标等
+├── src/          # 源代码文件夹，存放项目的主要代码
+│   ├── assets/   # 存放静态资源，如图片、样式表等
+│   ├── components/ # 存放 Vue 组件
+│   │   ├── icons/ # 图标组件文件夹
+│   │   ├── operation/ # 操作相关的组件文件夹
+│   │   │   ├── Creator.vue  # 创建操作组件
+│   │   │   ├── Deletion.vue # 删除操作组件
+│   │   │   ├── Modify.vue   # 修改操作组件
+│   │   │   ├── Purchase.vue # 购买操作组件
+│   │   ├── ClientTableComponent.vue # 客户端表格组件
+│   │   ├── ConfirmModal.vue # 确认模态框组件
+│   │   ├── LoginPage.vue    # 登录页面组件
+│   │   ├── MainPage.vue     # 主页面组件
+│   │   ├── ModifyModal.vue  # 修改模态框组件
+│   │   ├── Register.vue     # 注册页面组件
+│   │   ├── SetupPage.vue    # 设置页面组件
+│   │   ├── Sidebar.vue      # 侧边栏组件
+│   │   ├── TableComponent.vue # 表格组件
+│   │   └── ...              # 其他组件
+│   ├── router/     # 路由配置文件夹
+│   │   ├── index.js # 路由入口文件
+│   ├── utils/      # 工具函数文件夹
+│   │   ├── parseToken.js # 解析 JWT token 的工具函数
+│   ├── App.vue      # 主应用组件
+│   └── main.js      # 入口 JavaScript 文件，初始化 Vue 实例
+├── .gitignore     # Git 忽略文件配置
+├── index.html     # 项目的 HTML 模板文件
+├── jsconfig.json  # JavaScript 项目配置文件
+├── package-lock.json # 锁定项目依赖版本的文件
+├── package.json   # 项目的 package.json 文件，定义项目的依赖和脚本
+└── README.md      # 项目的自述文件，通常包含项目介绍和使用说明 
+```
