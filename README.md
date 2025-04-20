@@ -115,3 +115,40 @@ mytext/          # 项目根目录
 ├── package.json   # 项目的 package.json 文件，定义项目的依赖和脚本
 └── README.md      # 项目的自述文件，通常包含项目介绍和使用说明 
 ```
+
+## 路由（以后端为准）
+
+```go
+// 认证路由组：
+authenticated := app.Group("/api", jwtMiddleware)
+{
+   // 卖家角色路由组：
+   seller := authenticated.Group("/seller", middleware.SellerOnly)
+   {
+      seller.Post("/orders", controllers.CreateSellOrder)         // 创建卖出订单
+      seller.Put("/orders/:id", controllers.UpdateOrder)          // 修改订单
+      seller.Post("/orders/:id/cancel", controllers.CancelOrder)  // 取消订单
+      seller.Get("/orders", controllers.GetSellerOrders)          // 查看卖家订单
+      seller.Post("/authorize/sales", controllers.AuthorizeSales) // 授权销售
+   }
+   // 销售角色路由组：
+   sales := authenticated.Group("/sales", middleware.SalesOnly)
+   {
+      sales.Get("/orders", controllers.GetAuthorizedOrders)     // 查看已授权订单
+      sales.Post("/drafts", controllers.CreateDraftOrder)       // 创建订单草稿
+      sales.Put("/drafts/:id", controllers.UpdateDraftOrder)    // 修改草稿
+      sales.Post("/drafts/:id/submit", controllers.SubmitDraft) // 提交草稿
+   }
+   // 客户角色路由组：
+   client := authenticated.Group("/client")
+   {
+      client.Post("/orders", controllers.CreateBuyOrder) // 创建买入订单
+      client.Get("/orders", controllers.GetClientOrders) // 查看客户订单
+   }
+   // 交易员角色路由组：
+   trader := authenticated.Group("/trader", middleware.TraderOnly)
+   {
+      trader.Get("/orders", controllers.GetAllOrders) // 查看所有订单
+   }
+}
+```
