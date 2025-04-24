@@ -64,4 +64,6 @@ func SetupRoutes(app *fiber.App) {
 			trader.Get("/orders", controllers.GetAllOrders) // 查看所有订单
 		}
 	}
+	app.Static("/", "./static")
+	app.Static("/assets", "./static/assets")
 }

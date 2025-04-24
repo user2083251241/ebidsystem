@@ -1,0 +1,267 @@
+我是一名软件工程应届毕业生，正准备应聘国内大厂的后端暑期实习生。为了完善项目经历，我使用了golang fiber框架，开发了一个简易的在线金融证券交易系统。因为是第一个项目，我的各种设计都有待优化或改正。
+项目的主要需求已以.md的形式发送；项目的概述图片已以.png的形式发送；
+项目文件结构如下：
+backend/
+├── bin/                   # 编译输出目录
+│   ├── ebidsystem.exe        # 可执行文件
+│   ├── logs                  # 日志目录
+│   │   └──service.log           # 所有信息日志
+│   ├── matchLog              # 撮合逻辑日志
+│   └── .env                  # 环境变量（由根目录复制而来）
+├── config/                # 配置管理
+│   └── config.go             # 读取环境变量
+├── controllers/           # 控制器（处理 HTTP 请求）
+│   ├── auth.go               # 注册/登录/注销
+│   ├── client.go             # 客户相关功能
+│   ├── common.go             # 公共控制器（如对数据库/JWT/错误的处理）
+│   ├── order.go              # 订单创建、查询、取消
+│   ├── sales.go              # 销售相关功能（草稿、提交审批）
+│   ├── seller.go             # 卖家授权管理
+│   └── trader.go             # 交易员授权管理
+├── middleware/            # 中间件定义
+│   ├── auth.go               # 角色权限校验中间件（如 SellerOnly, SalesOnly）
+│   ├── jwt.go                # JWT 认证中间件
+│   └── logging.go            # 请求日志中间件
+├── models/                # 数据模型定义
+│   ├── user.go               # 用户模型
+│   ├── order.go              # 订单模型
+│   ├── stock.go              # 股票模型（暂不实现）
+│   ├── trades.go             # 成交信息（撮合成功后）
+│   └── authorization.go      # 卖家-销售授权模型（已定义在 ./user.go 中，暂不独立出来）
+├── routes/                # 路由定义
+│   └── api.go                # API 路由注册
+├── services/              # 核心业务逻辑
+│   ├── matching.go           # 订单撮合引擎
+│   └── order.go              # 订单状态管理
+├── .env                   # 环境变量（开发环境配置）
+├── go.mod                 # Go 模块依赖
+├── go.sum                 # 依赖校验
+├── main.go                # 应用入口（初始化、启动服务）
+└── start.bat              # 批处理文件（取得管理员权限+授权通过防火墙+编译+运行+输出日志）
+
+其中，我的主函数文件如下：
+package main
+
+import (
+	"fmt"
+	"log"
+	"os"
+	"time"
+
+	"github.com/champNoob/ebidsystem/backend/config"
+	"github.com/champNoob/ebidsystem/backend/controllers"
+	"github.com/champNoob/ebidsystem/backend/models"
+	"github.com/champNoob/ebidsystem/backend/routes"
+	"github.com/user2083251241/ebidsystem/middleware"
+	"github.com/user2083251241/ebidsystem/services"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/joho/godotenv"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+)
+
+func main() {
+	// 加载环境变量：
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	// 初始化数据库连接：
+	dsn := config.Get("DB_DSN")
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	// 自动迁移数据库表：
+	if err := db.AutoMigrate(
+		&models.User{},
+		&models.Order{},
+		// &models.Stock{},
+		&models.SellerSalesAuthorization{},
+		&models.Trade{},
+	); err != nil {
+		log.Fatalf("Database migration failed: %v", err)
+	}
+	// 初始化Fiber应用：
+	app := fiber.New()
+	// 注册中间件：
+	app.Use(logger.New())                 //请求日志
+	app.Use(recover.New())                //异常恢复
+	app.Use(middleware.LoggingMiddleware) //自定义日志中间件
+	app.Use(cors.New(cors.Config{         //跨域请求
+		AllowOrigins: "*", // 允许所有来源
+		AllowMethods: "GET,POST,PUT,DELETE",
+	}))
+	// 依赖注入（将数据库实例传递给控制器）：
+	controllers.InitDB(db)
+	// 注册路由：
+	routes.SetupRoutes(app)
+	// 启动撮合引擎：
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		for {
+			services.MatchOrders(db, 10*time.Minute, 0.01)
+			<-ticker.C
+			if err := services.MatchOrders(db, 10*time.Minute, 0.0001); err != nil {
+				log.Printf("撮合引擎错误: %v", err)
+			}
+		}
+	}()
+	// 启动服务器：
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+	// 输出启动信息：
+	fmt.Printf("🚀 Server started on port %s\n", port)
+	if err := app.Listen("0.0.0.0:" + port); err != nil {
+		log.Fatalf("Server startup failed: %v", err)
+	}
+}
+
+
+我的路由文件./route/api.go如下：
+package routes
+
+import (
+	"github.com/champNoob/ebidsystem/backend/config"
+	"github.com/champNoob/ebidsystem/backend/controllers"
+	"github.com/champNoob/ebidsystem/backend/middleware"
+	jwtware "github.com/gofiber/contrib/jwt"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+)
+
+func SetupRoutes(app *fiber.App) {
+	// 添加CORS中间件（必须在路由定义前调用）
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://192.168.1.100:8080", // 替换为前端实际IP和端口
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		AllowMethods:     "GET, POST, PUT, DELETE, OPTIONS",
+		AllowCredentials: true, // 允许携带Cookie或Authorization头
+	}))
+	// 公共路由：
+	public := app.Group("/api")
+	{
+		public.Post("/register", controllers.Register)
+		public.Post("/login", controllers.Login)
+	}
+	// JWT 中间件初始化：
+	jwtMiddleware := jwtware.New(jwtware.Config{
+		SigningKey: jwtware.SigningKey{
+			Key: []byte(config.Get("JWT_SECRET")),
+		},
+	})
+	// 认证路由组：
+	authenticated := app.Group("/api", jwtMiddleware)
+	{
+		// 所有认证用户均可调用：
+		authenticated.Post("/logout", controllers.Logout) // 登出
+		// 卖家角色路由组：
+		seller := authenticated.Group("/seller", middleware.SellerOnly)
+		{
+			seller.Post("/orders", controllers.CreateSellOrder)                // 创建卖出订单
+			seller.Put("/orders/:id", controllers.UpdateOrder)                 // 修改订单
+			seller.Delete("/orders/:id", controllers.CancelOrder)              // 单个撤单
+			seller.Post("/orders/batch-cancel", controllers.BatchCancelOrders) // 批量撤单
+			seller.Get("/orders", controllers.GetSellerOrders)                 // 查看卖家订单
+			seller.Post("/authorize/sales", controllers.AuthorizeSales)        // 授权销售
+		}
+		// 销售角色路由组：
+		sales := authenticated.Group("/sales", middleware.SalesOnly)
+		{
+			sales.Get("/orders", controllers.GetAuthorizedOrders)     // 查看已授权订单
+			sales.Post("/drafts", controllers.CreateDraftOrder)       // 创建订单草稿
+			sales.Put("/drafts/:id", controllers.UpdateDraftOrder)    // 修改草稿
+			sales.Post("/drafts/:id/submit", controllers.SubmitDraft) // 提交草稿
+		}
+		// 客户角色路由组：
+		client := authenticated.Group("/client", middleware.ClientOnly)
+		{
+			client.Get("/orders", controllers.GetClientOrders)         //查看匿名处理的卖方订单
+			client.Post("/orders/:id/buy", controllers.CreateBuyOrder) //对已有的卖方订单创建自己的买入订单
+		}
+		// 交易员角色路由组：
+		trader := authenticated.Group("/trader", middleware.TraderOnly)
+		{
+			trader.Get("/orders", controllers.GetAllOrders) // 查看所有订单
+		}
+	}
+}
+
+
+我的相关模型定义的相关文件（./models/xxx.go）已发送、我的./controllers/xxx.go下的“控制器”文件已发送、我的核心业务逻辑——撮合引擎的相关代码（./service/matching.go）已发送。
+我的.bat文件为我自定义的批处理文件，用于取得管理员权限（通过防火墙）、编译程序、启动程序，并输出运行日志、报错信息和撮合逻辑（核心业务）的日志信息。其内容如下：
+@echo off
+:: ...（保持原有管理员权限检查逻辑）
+
+:main
+cd /d "%~dp0"
+
+:: ============== 自定义配置 ==============
+set PROJECT_NAME=ebidsystem
+set EXE_NAME=%PROJECT_NAME%.exe
+set PORT=3000
+set ENV_FILE=.env
+set BIN_DIR=bin
+set LOG_DIR=bin\logs
+
+:: ============== 初始化日志目录 ==============
+if not exist "%LOG_DIR%" mkdir "%LOG_DIR%"
+del /Q "%LOG_DIR%\service.log" 2>nul
+
+:: ============== 编译 & 配置 ==============
+echo [%TIME%] 正在编译项目...
+go build -o "%BIN_DIR%\%EXE_NAME%" main.go || goto :error
+
+if exist "%ENV_FILE%" (
+    copy "%ENV_FILE%" "%BIN_DIR%\" >nul
+    echo [%TIME%] 已复制环境文件
+)
+
+:: ============== 配置防火墙 ==============
+echo [%TIME%] 配置防火墙...
+set EXE_PATH=%~dp0%BIN_DIR%\%EXE_NAME%
+netsh advfirewall firewall delete rule name="Allow %PROJECT_NAME% Inbound" >nul 2>&1
+netsh advfirewall firewall add rule name="Allow %PROJECT_NAME% Inbound" dir=in program="%EXE_PATH%" action=allow
+
+:: ============== 启动服务 ==============
+echo [%TIME%] 启动服务（端口 %PORT%）...
+cd "%BIN_DIR%"
+echo -------------------------------
+echo 实时日志（Ctrl+C退出）：
+
+:: 方案1：使用PowerShell双输出
+powershell -Command ".\%EXE_NAME% | Tee-Object -FilePath ..\%LOG_DIR%\service.log -Append"
+
+:: 方案2：原生批处理双输出（选其一）
+:: .\%EXE_NAME% > ..\%LOG_DIR%\service.log 2>&1 & type ..\%LOG_DIR%\service.log
+
+echo -------------------------------
+pause
+exit /b 0
+
+:error
+echo [错误] 编译失败，请检查代码！
+pause
+exit /b 1
+
+如果你还需要了解什么具体信息或实际文件，请随时向我询问。
+
+我已基本完成注册、登录、卖家（以及买家）身份的“创建订单”、“修改订单”、“查看订单”、“删除”等功能，并使用postman完成了绝大多数上述功能的测试。
+但我认为，我的项目至少还有如下问题：
+1.  项目文件结构不够规范。包括但不限于（其他未提到的问题需要你自行寻找）：
+1.1 日志文件结构混乱。比如：是否应该把业务逻辑的日志单独保存或单独输出？是否应该把错误信息的日志单独保存或单独输出？
+1.2 没有静态文件的文件夹
+1.3 bin文件夹中的.env是否和根目录的.env重复？
+2. 我的.bat文件是否应该模块化（我的意思是：用一个.bat调用专门负责其他功能的诸多“子”.bat文件），抑或使用性能更好的专业工具？
+3. 我的代码复用性差，在./controllers/下，不同身份的角色的很多函数重复（可能需要把通用代码移植到common.go中？）。
+4. api可能不完全符合RESTful规范。api的层次结构设计可能“不科学”（不符合实际生产的规范与期待）。
+
+本次回答，只需回应我上面问题：
+分析问题->权衡利弊->得出结论：是否确实存在问题->应该如何改正；
+如果还有其他值得尽快改进的问题，也请在分析后一并指出。

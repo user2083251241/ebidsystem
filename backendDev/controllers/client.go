@@ -8,6 +8,7 @@ import (
 // 客户竞拍（买入订单）：
 func CreateBuyOrder(c *fiber.Ctx) error {
 	type BuyRequest struct {
+		// Symbol   string  `json:"symbol"` //股票代码
 		Quantity int     `json:"quantity"`
 		Price    float64 `json:"price"` // 仅限限价单需要
 	}
