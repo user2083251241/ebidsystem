@@ -6,9 +6,11 @@
  │       (bound on host 0.0.0.0 and port 3000)       │ 
  │                                                   │ 
  │ Handlers ............ 33  Processes ........... 1 │ 
- │ Prefork ....... Disabled  PID ............. 28868 │ 
+ │ Prefork ....... Disabled  PID ............. 25792 │ 
  └───────────────────────────────────────────────────┘ 
 
-[POST] /api/login - Request
-[POST] /api/login - Response Status: 200
-1 | POST | /api/login | -
+[GET] /api/seller/orders - Request
+[GET] /api/seller/orders - Response Status: 200
+
+2025/04/25 00:40:56 [32mD:/GitHubLab/ebidsystemCooperation/backendDev/services/matching.go:77 [33mSLOW SQL >= 200ms
+[0m[31;1m[225.884ms] [33m[rows:1][35m SELECT * FROM `orders` WHERE (direction = 'buy' AND status = 'pending' AND (order_type = 'market' OR (order_type = 'limit' AND created_at <= '2025-04-24 16:30:56.62'))) AND `orders`.`deleted_at` IS NULL ORDER BY CASE WHEN order_type = 'market' THEN 0 ELSE 1 END, price DESC, created_at ASC[0m
