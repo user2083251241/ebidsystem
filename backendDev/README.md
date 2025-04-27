@@ -64,9 +64,9 @@ backend/
 ├── config/                # 配置管理
 │   └── config.go             # 读取环境变量
 ├── controllers/           # 控制器（处理 HTTP 请求）
-│   ├── auth.go               # 注册/登录/注销
+│   ├── auth.go               # 专注认证与授权逻辑（注册/登录/注销）
 │   ├── client.go             # 客户相关功能
-│   ├── common.go             # 公共控制器（如对数据库/JWT/错误的处理）
+│   ├── common.go             # 公共控制器（与业务无关的通用工具，如对数据库/JWT/错误的处理）
 │   ├── order.go              # 订单创建、查询、取消
 │   ├── sales.go              # 销售相关功能（草稿、提交审批）
 │   ├── seller.go             # 卖家授权管理

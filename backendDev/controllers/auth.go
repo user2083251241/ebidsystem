@@ -144,18 +144,6 @@ func Logout(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "用户已注销"})
 }
 
-func RoleRequired(role string) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		token := c.Locals("user").(*jwt.Token)
-		claims := token.Claims.(jwt.MapClaims)
-		userRole := claims["role"].(string)
-		if userRole != role {
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "权限不足"})
-		}
-		return c.Next()
-	}
-}
-
 func AttachUserToContext() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		user, err := GetCurrentUser(c)
