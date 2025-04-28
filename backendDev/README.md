@@ -57,16 +57,16 @@
 backend/
 ├── bin/                   # 编译输出目录
 │   ├── ebidsystem.exe        # 可执行文件
-│   ├── logs                  # 日志目录
-│   │   └──service.log           # 所有信息日志
-│   ├── matchLog              # 撮合逻辑日志
-│   └── .env                  # 环境变量（由根目录复制而来）
+│   └── logs                  # 日志目录
+│       ├── service.log          # 存放 HTTP 请求、错误日志等通用日志
+│       ├── error.log            # 单独记录错误级别的日志（可通过日志库的 Level 过滤）
+│       └── match.log            # 存放撮合引擎业务日志
 ├── config/                # 配置管理
 │   └── config.go             # 读取环境变量
 ├── controllers/           # 控制器（处理 HTTP 请求）
-│   ├── auth.go               # 注册/登录/注销
+│   ├── auth.go               # 专注认证与授权逻辑（注册/登录/注销）
 │   ├── client.go             # 客户相关功能
-│   ├── common.go             # 公共控制器（如对数据库/JWT/错误的处理）
+│   ├── common.go             # 公共控制器（与业务无关的通用工具，如对数据库/JWT/错误的处理）
 │   ├── order.go              # 订单创建、查询、取消
 │   ├── sales.go              # 销售相关功能（草稿、提交审批）
 │   ├── seller.go             # 卖家授权管理
@@ -90,7 +90,7 @@ backend/
 ├── go.mod                 # Go 模块依赖
 ├── go.sum                 # 依赖校验
 ├── main.go                # 应用入口（初始化、启动服务）
-└── start.bat              # 批处理文件（取得管理员权限+授权通过防火墙+编译+运行+输出日志）
+└── magefile.go            # 自动化构建文件（取得管理员权限+授权通过防火墙+编译+运行+输出日志）
 ```
 
 ### 主函数核心流程

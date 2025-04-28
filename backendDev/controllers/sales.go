@@ -3,15 +3,15 @@ package controllers
 import (
 	"github.com/champNoob/ebidsystem/backend/models"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 // 销售查看已授权的卖家订单
 func GetAuthorizedOrders(c *fiber.Ctx) error {
 	// 获取当前销售 ID
-	token := c.Locals("user").(*jwt.Token)
-	claims := token.Claims.(jwt.MapClaims)
-	salesID := uint(claims["user_id"].(float64))
+	salesID, err := getCurrentUserID(c)
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"error": "从 JWT 中获取卖家 ID 失败"})
+	}
 
 	// 查询已授权的卖家订单
 	var orders []models.Order
@@ -37,7 +37,10 @@ func CreateDraftOrder(c *fiber.Ctx) error {
 	}
 
 	// 获取当前销售 ID 并验证授权
-	salesID := uint(c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)["user_id"].(float64))
+	salesID, err := getCurrentUserID(c)
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"error": "从 JWT 中获取卖家 ID 失败"})
+	}
 	var auth models.SellerSalesAuthorization
 	if err := db.Where("sales_id = ? AND authorization = 'approved'", salesID).First(&auth).Error; err != nil {
 		return c.Status(403).JSON(fiber.Map{"error": "未获得卖家授权"})

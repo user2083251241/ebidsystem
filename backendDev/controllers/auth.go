@@ -143,3 +143,14 @@ func Logout(c *fiber.Ctx) error {
 	// 返回成功信息：
 	return c.JSON(fiber.Map{"message": "用户已注销"})
 }
+
+func AttachUserToContext() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		user, err := GetCurrentUser(c)
+		if err != nil {
+			return err
+		}
+		c.Locals("currentUser", user) // 存入上下文
+		return c.Next()
+	}
+}

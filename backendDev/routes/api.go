@@ -35,7 +35,7 @@ func SetupRoutes(app *fiber.App) {
 		// 所有认证用户均可调用：
 		authenticated.Post("/logout", controllers.Logout) // 登出
 		// 卖家角色路由组：
-		seller := authenticated.Group("/seller", middleware.SellerOnly)
+		seller := authenticated.Group("/seller", middleware.RoleRequired("seller"))
 		{
 			seller.Post("/orders", controllers.CreateSellOrder)                // 创建卖出订单
 			seller.Put("/orders/:id", controllers.UpdateOrder)                 // 修改订单
@@ -45,7 +45,7 @@ func SetupRoutes(app *fiber.App) {
 			seller.Post("/authorize/sales", controllers.AuthorizeSales)        // 授权销售
 		}
 		// 销售角色路由组：
-		sales := authenticated.Group("/sales", middleware.SalesOnly)
+		sales := authenticated.Group("/sales", middleware.RoleRequired("sales"))
 		{
 			sales.Get("/orders", controllers.GetAuthorizedOrders)     // 查看已授权订单
 			sales.Post("/drafts", controllers.CreateDraftOrder)       // 创建订单草稿
@@ -53,13 +53,13 @@ func SetupRoutes(app *fiber.App) {
 			sales.Post("/drafts/:id/submit", controllers.SubmitDraft) // 提交草稿
 		}
 		// 客户角色路由组：
-		client := authenticated.Group("/client", middleware.ClientOnly)
+		client := authenticated.Group("/client", middleware.RoleRequired("client"))
 		{
 			client.Get("/orders", controllers.GetClientOrders)         //查看匿名处理的卖方订单
 			client.Post("/orders/:id/buy", controllers.CreateBuyOrder) //对已有的卖方订单创建自己的买入订单
 		}
 		// 交易员角色路由组：
-		trader := authenticated.Group("/trader", middleware.TraderOnly)
+		trader := authenticated.Group("/trader", middleware.RoleRequired("trader"))
 		{
 			trader.Get("/orders", controllers.GetAllOrders) // 查看所有订单
 		}

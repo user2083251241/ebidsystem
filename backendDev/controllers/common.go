@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/champNoob/ebidsystem/backend/models"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
@@ -29,4 +30,22 @@ func getCurrentUserID(c *fiber.Ctx) (userID uint, err error) {
 	}
 	userID = uint(userIDFloat) //再转为 uint
 	return
+}
+
+// 获取当前用户完整信息（包含角色和其他字段）
+func GetCurrentUser(c *fiber.Ctx) (*models.User, error) {
+	userID, err := getCurrentUserID(c)
+	if err != nil {
+		return nil, err
+	}
+	var user models.User
+	if err := db.Where("id = ?", userID).First(&user).Error; err != nil {
+		return nil, fiber.NewError(fiber.StatusUnauthorized, "用户不存在")
+	}
+	return &user, nil
+}
+
+// 统一错误响应：
+func ErrorResponse(c *fiber.Ctx, status int, message string) error {
+	return c.Status(status).JSON(fiber.Map{"error": message})
 }
