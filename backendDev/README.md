@@ -85,7 +85,7 @@ backend/
 │   └── api.go                # API 路由注册
 ├── services/              # 核心业务逻辑
 │   ├── matching.go           # 订单撮合引擎
-│   └── order.go              # 订单状态管理
+│   └── order_services.go     # 订单业务管理（CRUD等）
 ├── .env                   # 环境变量（开发环境配置）
 ├── go.mod                 # Go 模块依赖
 ├── go.sum                 # 依赖校验

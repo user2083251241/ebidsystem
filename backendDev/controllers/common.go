@@ -15,7 +15,7 @@ func InitDB(database *gorm.DB) {
 	db = database
 }
 
-func getCurrentUserID(c *fiber.Ctx) (userID uint, err error) {
+func getCurrentUserIDFromDB(c *fiber.Ctx) (userID uint, err error) {
 	token, ok := c.Locals("user").(*jwt.Token) //获取 token
 	if !ok {
 		return 0, fiber.NewError(fiber.StatusUnauthorized, "无效的 Token")
@@ -33,8 +33,8 @@ func getCurrentUserID(c *fiber.Ctx) (userID uint, err error) {
 }
 
 // 获取当前用户完整信息（包含角色和其他字段）
-func GetCurrentUser(c *fiber.Ctx) (*models.User, error) {
-	userID, err := getCurrentUserID(c)
+func GetCurrentUserFromDB(c *fiber.Ctx) (*models.User, error) {
+	userID, err := getCurrentUserIDFromDB(c)
 	if err != nil {
 		return nil, err
 	}
