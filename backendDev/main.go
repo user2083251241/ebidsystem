@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
-	"time"
+	"os/signal"
+	"syscall"
 
 	"github.com/champNoob/ebidsystem/backend/config"
 	"github.com/champNoob/ebidsystem/backend/models"
@@ -27,13 +29,15 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+
 	/* 初始化数据库连接 */
+
 	dsn := config.Get("DB_DSN")
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	/* 自动迁移数据库表 */
+	// 自动迁移数据库表：
 	if err := db.AutoMigrate(
 		&models.BaseOrder{},
 		&models.DraftOrder{},
@@ -44,9 +48,13 @@ func main() {
 	); err != nil {
 		log.Fatalf("Database migration failed: %v", err)
 	}
+
 	/* 初始化Fiber应用 */
+
 	app := fiber.New()
+
 	/* 注册全局中间件 */
+
 	// 异常恢复：
 	app.Use(recover.New(recover.Config{
 		EnableStackTrace: true,
@@ -74,21 +82,29 @@ func main() {
 			errorLog.WriteString(fmt.Sprintf("[PANIC] %v\n", e))
 		},
 	}))
-	// controllers.InitDB(db)
+
 	/* 注册路由（依赖注入） */
+
 	routes.SetupRoutes(app, db)
 	// 启动撮合引擎：
+	me := services.NewMatchingEngine(db)
+	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		ticker := time.NewTicker(10 * time.Second)
-		for {
-			services.MatchOrders(db, 10*time.Minute, 0.01)
-			<-ticker.C
-			if err := services.MatchOrders(db, 10*time.Minute, 0.0001); err != nil {
-				log.Printf("撮合引擎错误: %v", err)
-			}
+		me.Run(ctx)
+	}()
+	// 捕获系统信号，用于优雅关闭：
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigChan
+		cancel() //取消上下文，停止匹配引擎
+		if err := app.Shutdown(); err != nil {
+			log.Printf("Server shutdown failed: %v", err)
 		}
 	}()
+
 	/* 启动服务器 */
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "3000"

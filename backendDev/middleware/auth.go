@@ -1,9 +1,9 @@
 package middleware
 
 import (
+	"github.com/champNoob/ebidsystem/backend/models"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/user2083251241/ebidsystem/models"
 	"gorm.io/gorm"
 )
 
@@ -20,7 +20,7 @@ func RoleRequired(role string) fiber.Handler {
 	}
 }
 
-// 轻量级用户信息（仅从 JWT 提取）
+// 轻量级用户信息（仅从 JWT 提取）：
 func GetCurrentUserFromJWT(c *fiber.Ctx) (*models.User, error) {
 	token := c.Locals("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
@@ -36,6 +36,17 @@ func GetCurrentUserIDFromJWT(c *fiber.Ctx) (uint, error) {
 		return 0, err
 	}
 	return user.ID, nil
+}
+
+func AttachUserToContext() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		user, err := GetCurrentUserFromJWT(c)
+		if err != nil {
+			return err
+		}
+		c.Locals("currentUser", user) // 存入上下文
+		return c.Next()
+	}
 }
 
 // 完整用户信息（需查数据库）
@@ -54,12 +65,12 @@ func GetFullUserInfoFromDB(c *fiber.Ctx, db *gorm.DB) (*models.User, error) {
 func DraftAuthorization() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		draftID := c.Params("id")
-		var draft models.Order
+		var draft models.DraftOrder
 		if err := db.First(&draft, draftID).Error; err != nil {
 			return c.Status(404).JSON(fiber.Map{"error": "草稿不存在"})
 		}
 		user, _ := GetCurrentUserFromJWT(c)
-		if draft.DraftBySales != user.ID {
+		if draft.CreatorID != user.ID {
 			return c.Status(403).JSON(fiber.Map{"error": "无权操作此草稿"})
 		}
 		return c.Next()

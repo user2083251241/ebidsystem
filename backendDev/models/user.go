@@ -13,14 +13,6 @@ type User struct {
 	IsDeleted    bool   `gorm:"default:false"` //软删除标记
 }
 
-// 卖家与销售的授权关联表：
-type SellerSalesAuthorization struct {
-	gorm.Model
-	SellerID      uint   `gorm:"not null"`                                                     //卖家用户ID
-	SalesID       uint   `gorm:"not null"`                                                     //销售用户ID
-	Authorization string `gorm:"type:enum('pending','approved','rejected');default:'pending'"` //授权状态
-}
-
 // 表名自定义（可选）：
 func (User) TableName() string {
 	return "users"

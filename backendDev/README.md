@@ -62,9 +62,11 @@ backend/
 │       ├── error.log            # 单独记录错误级别的日志（可通过日志库的 Level 过滤）
 │       └── match.log            # 存放撮合引擎业务日志
 ├── config/                # 配置管理
-│   └── config.go             # 读取环境变量
+│   ├── config.go             # 读取环境变量
+│   └── database.go           # 构建全局数据库实例并初始化数据库连接
 ├── controllers/           # 控制器（处理 HTTP 请求）
 │   ├── auth.go               # 专注认证与授权逻辑（注册/登录/注销）
+│   ├── base_controller.go    # 基础控制器（复用请求解析和校验）
 │   ├── client.go             # 客户相关功能
 │   ├── common.go             # 公共控制器（与业务无关的通用工具，如对数据库/JWT/错误的处理）
 │   ├── order.go              # 订单创建、查询、取消
@@ -76,16 +78,23 @@ backend/
 │   ├── jwt.go                # JWT 认证中间件
 │   └── logging.go            # 请求日志中间件
 ├── models/                # 数据模型定义
+│   ├── authorization.go      # 卖家-销售授权模型
 │   ├── user.go               # 用户模型
 │   ├── order.go              # 订单模型
 │   ├── stock.go              # 股票模型（暂不实现）
-│   ├── trades.go             # 成交信息（撮合成功后）
-│   └── authorization.go      # 卖家-销售授权模型（已定义在 ./user.go 中，暂不独立出来）
+│   └── trades.go             # 成交信息（撮合成功后）
 ├── routes/                # 路由定义
 │   └── api.go                # API 路由注册
 ├── services/              # 核心业务逻辑
 │   ├── matching.go           # 订单撮合引擎
-│   └── order_services.go     # 订单业务管理（CRUD等）
+│   ├── order_query.go        # 订单查询管理
+│   ├── order_services.go     # 订单业务管理
+│   └── requests.go           # 订单请求管理
+├── static/                # 静态资源
+|   └── assets/                # 前端资源
+├── utils/                 # 工具函数
+|   ├── ptr.go                 # 指针工具
+|   └── validation.go          # 校验工具
 ├── .env                   # 环境变量（开发环境配置）
 ├── go.mod                 # Go 模块依赖
 ├── go.sum                 # 依赖校验
@@ -246,24 +255,46 @@ matching.go
 
 ## 设计思想
 
+### `SOLID` 原则
+
+#### `SR` 单一职责
+
+每个控制器函数只处理特定的 HTTP 请求
+
+通用命名如 `GetOrders` 可能导致不同角色的处理逻辑混杂在同一个函数中，而专用命名如 `GetSellerOrders` 则更清晰，但可能增加代码重复。权衡利弊后，专用命名更符合单一职责原则，尽管有一定重复，但提高了可读性和可维护性。
+
+#### `DI` 依赖注入
+
+使用依赖注入将服务实例传入控制器，避免全局变量，提高可测试性。
+
+### `CSM` 分层
+
+> `controller` - `service` - `model`
+
+#### `controller`
+
+处理 HTTP 请求，调用 `service` 层逻辑
+
+基础控制器封装通用请求解析和校验。
+
+#### `service`
+
+实现业务逻辑，调用 `model` 层操作数据库
+
+通过 `QueryCondition` 实现动态查询，`validateOrderRequest` 复用校验逻辑。
+
+#### `model`
+
+定义数据模型，提供数据库操作方法
+
 ### RESTful API 设计
 
 遵循 RESTful API 设计原则，将资源路径与 HTTP 方法对应，实现清晰的资源操作。
 
 ### 中间件设计
 
-通过中间件实现权限控制、日志记录等功能，提高代码复用性和可维护性。
+通过中间件实现**权限控制**、**日志记录**等功能，提高代码复用性和可维护性。
 
 ### 环境变量管理
 
 使用 .env 文件管理环境变量，方便在不同环境下配置。
-
-### SoC 职责分离原则
-
-将不同职责的代码分离到不同的包中，实现单一职责原则，提高代码的可维护性和可扩展性。
-
-#### controller-service-model
-
-- controller：处理 HTTP 请求，调用 service 层逻辑
-- service：实现业务逻辑，调用 model 层操作数据库
-- model：定义数据模型，提供数据库操作方法
