@@ -6,7 +6,7 @@ import "time"
 
 // 卖家创建订单请求：
 type CreateSellerOrderRequest struct {
-	Symbol    string  `json:"symbol" validate:"required,alphanum"`
+	Symbol    string  `json:"symbol" validate:"required,alphanum,max=255"`
 	Quantity  int     `json:"quantity" validate:"required,min=1"`
 	Price     float64 `json:"price" validate:"required,gt=0"`
 	OrderType string  `json:"type" validate:"required,oneof=market limit"`

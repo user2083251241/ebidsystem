@@ -2,17 +2,18 @@
 
 ## 总体需求分析
 
-![alt text](projectRequirement.png)
+![alt text](./static/assets/projectRequirement.png)
 
 ### 角色定义与互动流程
 
 #### 角色定义
 
-| 角色     | 职责                                                                 | 典型操作场景                                                                 |
-|----------|----------------------------------------------------------------------|------------------------------------------------------------------------------|
-| 客户 | 个人投资者或机构投资者，进行金融产品交易、查询账户信息等。           | - 注册/登录<br>- 查看股票行情<br>- 下单（买入/卖出）<br>- 查询持仓与交易记录 |
-| 销售 | 金融机构的客户经理，负责客户关系维护、产品推荐、开户审核等。         | - 审核客户资质<br>- 处理客户咨询<br>- 生成客户分析报告<br>- 推送金融产品信息 |
-| 交易员 | 金融机构的专业人员，负责执行大额交易、风险控制、市场分析等。       | - 监控市场行情<br>- 手动执行大宗交易<br>- 管理订单队列<br>- 风险预警与干预   |
+| 角色     | 职责                         | 典型操作场景                                                                 |
+|----------|-----------------------------|------------------------------------------------------------------------------|
+| 卖方 <br> seller | 个人投资者或机构投资者，进行金融产品交易、查询账户信息等。           | - 注册/登录 <br>- 查看股票行情 <br>- 下单（卖出） <br>- 修改订单 <br>- 查询持仓与交易记录 <br>- 删除订单 <br>- 审批订单草稿（由销售提供） |
+| 客户 <br> （买方） <br> client | 个人投资者或机构投资者，进行金融产品交易、查询账户信息等。    | - 注册/登录 <br>- 查看股票行情 <br>- 下单（迈ru） <br>- 修改订单 <br>- 查询持仓与交易记录 <br>- 删除订单 |
+| 销售 <br> sales | 金融机构的客户经理，负责客户关系维护、产品推荐、开户审核等。         | - 审核客户资质<br>- 处理客户咨询 <br>- 生成客户分析报告 <br>- 推送金融产品信息 <br>- 向卖方提供订单草稿 <br>- 修改/删除订单草稿 |
+| 交易员 <br> trader | 金融机构的专业人员，负责执行大额交易、风险控制、市场分析等。       | - 监控市场行情<br>- 手动执行大宗交易<br>- 管理订单队列<br>- 风险预警与干预   |
 
 #### 角色间互动流程
 
@@ -46,12 +47,14 @@
 | 用户管理   | 客户注册/登录、角色权限控制（客户/销售/交易员）                        | - JWT 认证<br>- RBAC 权限模型（如 `casbin` 库）                             |
 | 订单系统   | 下单、撤单、订单状态查询                                               | - 数据库事务（GORM）<br>- 订单撮合逻辑（市价单/限价单）                     |
 | 行情服务   | 实时股票价格推送、历史数据查询                                         | - WebSocket/SSE 实时推送<br>- 第三方数据API集成（如腾讯证券）               |
-| 风险管理   | 账户余额校验、交易熔断机制                                             | - 定时任务（如 `cron` 库）<br>- 分布式锁（Redis）                           |
+| 风险管理   | 账户余额校验、交易熔断机制                                             | - 定时任务（如 `cron` 库）<br>- 分布式锁（`Redis`）                           |
 | 报表系统   | 生成客户交易报告、销售业绩统计                                         | - 数据聚合查询（SQL）<br>- Excel/PDF 导出（如 `excelize` 库）               |
 
 ---
 
 ## 项目结构
+
+### 项目文件结构
 
 ```tree
 backend/
@@ -69,7 +72,6 @@ backend/
 │   ├── base_controller.go    # 基础控制器（复用请求解析和校验）
 │   ├── client.go             # 客户相关功能
 │   ├── common.go             # 公共控制器（与业务无关的通用工具，如对数据库/JWT/错误的处理）
-│   ├── order.go              # 订单创建、查询、取消
 │   ├── sales.go              # 销售相关功能（草稿、提交审批）
 │   ├── seller.go             # 卖家授权管理
 │   └── trader.go             # 交易员授权管理
@@ -78,18 +80,20 @@ backend/
 │   ├── jwt.go                # JWT 认证中间件
 │   └── logging.go            # 请求日志中间件
 ├── models/                # 数据模型定义
+│   ├── audit_log.go          # 审计日志结构体
 │   ├── authorization.go      # 卖家-销售授权模型
-│   ├── user.go               # 用户模型
 │   ├── order.go              # 订单模型
 │   ├── stock.go              # 股票模型（暂不实现）
-│   └── trades.go             # 成交信息（撮合成功后）
+│   ├── trades.go             # 成交信息（撮合成功后）
+│   └── user.go               # 用户模型
 ├── routes/                # 路由定义
 │   └── api.go                # API 路由注册
 ├── services/              # 核心业务逻辑
 │   ├── matching.go           # 订单撮合引擎
 │   ├── order_query.go        # 订单查询管理
 │   ├── order_services.go     # 订单业务管理
-│   └── requests.go           # 订单请求管理
+│   ├── requests.go           # 订单请求管理
+│   └── user_services.go      # 用户管理（注册、登录、注销等）
 ├── static/                # 静态资源
 |   └── assets/                # 前端资源
 ├── utils/                 # 工具函数
@@ -98,65 +102,102 @@ backend/
 ├── .env                   # 环境变量（开发环境配置）
 ├── go.mod                 # Go 模块依赖
 ├── go.sum                 # 依赖校验
-├── main.go                # 应用入口（初始化、启动服务）
-└── magefile.go            # 自动化构建文件（取得管理员权限+授权通过防火墙+编译+运行+输出日志）
+├── magefile.go            # 自动化构建文件（取得管理员权限+授权通过防火墙+编译+运行+输出日志）
+└── main.go                # 应用入口（初始化、启动服务）
 ```
+
+### `CSM` 分层
+
+> `controller` - `service` - `model`
+
+#### `controller`
+
+处理 HTTP 请求，调用 `service` 层逻辑
+
+基础控制器封装通用请求解析和校验。
+
+#### `service`
+
+实现业务逻辑，调用 `model` 层操作数据库
+
+通过 `QueryCondition` 实现动态查询，`validateOrderRequest` 复用校验逻辑。
+
+#### `model`
+
+定义数据模型，提供数据库操作方法
 
 ### 主函数核心流程
 
-1. 加载环境变量：读取 .env 文件中的配置（如数据库连接信息）
+1. 加载环境变量：读取 `.env` 文件中的配置
 
-2. 连接数据库：通过 GORM 初始化 MySQL 连接
+2. 数据库初始化并连接：通过 GORM 初始化 MySQL 连接，将 `models` 包中的结构体迁移为数据库表
 
-3. 自动迁移表结构：根据 models 包中的结构体（如 User、Order）创建数据库表
+3. 初始化 Fiber 应用
 
-4. 初始化 Fiber 应用：注册全局中间件（如跨域、日志、异常恢复）
+4. 注册全局中间件：异常恢复、跨域请求、配置请求日志中间件和全局错误处理中间件
 
-5. 注册路由：调用 routes.SetupRoutes(app) 绑定 API 路径
+5. 注册路由（依赖注入）：调用 `routes.SetupRoutes(app)` 绑定 API 路径
 
-6. 启动服务：监听指定端口（如 3000）
+6. 启动撮合引擎：启动后捕获系统信号，用于优雅关闭
 
-### 批处理文件功能
-
-取得管理员权限+授权通过防火墙+编译+运行+输出日志
+7. 启动服务器：监听指定端口（如 3000），并输出启动信息
 
 ### 路由
 
 对路由使用了 `RESTful` 规范化实践
 
 ```go
+// 公共路由：
+public := app.Group("/api")
+{
+   public.Post("/register", authController.Register)
+   public.Post("/login", authController.Login)
+}
+// 初始化 JWT 中间件：
+jwtMiddleware := jwtware.New(jwtware.Config{
+   SigningKey: jwtware.SigningKey{
+      Key: []byte(config.Get("JWT_SECRET")),
+   },
+}  
 // 认证路由组：
 authenticated := app.Group("/api", jwtMiddleware)
 {
-   // 卖家角色路由组：
-   seller := authenticated.Group("/seller", middleware.SellerOnly)
+   // 所有认证用户均可调用：
+   authenticated.Post("/logout", authController.Logout) //登出
+   // 卖家路由组：
+   seller := authenticated.Group("/seller", middleware.RoleRequired("seller"))
    {
-      seller.Post("/orders", controllers.CreateSellOrder)         // 创建卖出订单
-      seller.Put("/orders/:id", controllers.UpdateOrder)          // 修改订单
-      seller.Post("/orders/:id/cancel", controllers.CancelOrder)  // 取消订单
-      seller.Get("/orders", controllers.GetSellerOrders)          // 查看卖家订单
-      seller.Post("/authorize/sales", controllers.AuthorizeSales) // 授权销售
+      seller.Post("/orders", sellerController.SellerCreateOrder)                    //创建卖出订单
+      seller.Put("/orders/:id", sellerController.SellerUpdateOrder)                 //修改订单
+      seller.Delete("/orders/:id", sellerController.SellerCancelOrder)              //单个撤单
+      seller.Post("/orders/batch-cancel", sellerController.SellerBatchCancelOrders) //批量撤单
+      seller.Get("/orders", sellerController.SellerGetOrders)                       //查看卖家订单
+      seller.Post("/authorize/sales", sellerController.SellerAuthorizeSales)        //授权销售
    }
-   // 销售角色路由组：
-   sales := authenticated.Group("/sales", middleware.SalesOnly)
+   // 销售路由组：
+   sales := authenticated.Group("/sales", middleware.RoleRequired("sales"))
    {
-      sales.Get("/orders", controllers.GetAuthorizedOrders)     // 查看已授权订单
-      sales.Post("/drafts", controllers.CreateDraftOrder)       // 创建订单草稿
-      sales.Put("/drafts/:id", controllers.UpdateDraftOrder)    // 修改草稿
-      sales.Post("/drafts/:id/submit", controllers.SubmitDraft) // 提交草稿
+      sales.Get("/orders", salesController.SalesGetAuthorizedDrafts)     //查看已授权草稿
+      sales.Post("/drafts", salesController.SalesCreateDraft)            //创建草稿
+      sales.Put("/drafts/:id", salesController.SalesUpdateDraft)         //修改草稿
+      sales.Post("/drafts/:id/submit", salesController.SalesSubmitDraft) //提交草稿
+      sales.Delete("/drafts/:id", salesController.SalesDeleteDraft)      //删除草稿
    }
-   // 客户角色路由组：
-   client := authenticated.Group("/client")
+   // 客户路由组：
+   client := authenticated.Group("/client", middleware.RoleRequired("client"))
    {
-      client.Post("/orders", controllers.CreateBuyOrder) // 创建买入订单
-      client.Get("/orders", controllers.GetClientOrders) // 查看客户订单
+      client.Get("/orders", clientController.ClientGetOrders)               //查看匿名处理的卖方订单
+      client.Post("/orders/:id/buy", clientController.ClientCreateBuyOrder) //对已有的卖方订单创建自己买 订单
    }
-   // 交易员角色路由组：
-   trader := authenticated.Group("/trader", middleware.TraderOnly)
+   // 交易员路由组：
+   trader := authenticated.Group("/trader", middleware.RoleRequired("trader"))
    {
-      trader.Get("/orders", controllers.GetAllOrders) // 查看所有订单
+      trader.Get("/orders", traderController.TraderGetAllOrders) // 查看所有订单
+      // trader.Post("/orders/:id/cancel", traderController.EmergencyCancel) //手动操作，暂不实现
    }
 }
+app.Static("/", "./static")
+app.Static("/assets", "./static/assets")
 ```
 
 ## 核心业务：订单撮合
@@ -253,6 +294,18 @@ matching.go
 
 ---
 
+## 关键工具
+
+### `postman` 请求集合工具
+
+### `Mage` 自动化构建工具
+
+### `Validate` 结构-表 验证工具
+
+### `JWT` 认证工具
+
+### `gsudo` 提权工具
+
 ## 设计思想
 
 ### `SOLID` 原则
@@ -266,26 +319,6 @@ matching.go
 #### `DI` 依赖注入
 
 使用依赖注入将服务实例传入控制器，避免全局变量，提高可测试性。
-
-### `CSM` 分层
-
-> `controller` - `service` - `model`
-
-#### `controller`
-
-处理 HTTP 请求，调用 `service` 层逻辑
-
-基础控制器封装通用请求解析和校验。
-
-#### `service`
-
-实现业务逻辑，调用 `model` 层操作数据库
-
-通过 `QueryCondition` 实现动态查询，`validateOrderRequest` 复用校验逻辑。
-
-#### `model`
-
-定义数据模型，提供数据库操作方法
 
 ### RESTful API 设计
 

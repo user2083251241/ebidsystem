@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"log"
 	"time"
 
 	"github.com/champNoob/ebidsystem/backend/models"
@@ -26,14 +27,15 @@ func NewOrderService(db *gorm.DB) *OrderService {
 // ---------------------- 卖家订单操作 ----------------------
 // 创建卖家订单：
 func (s *OrderService) CreateSellerOrder(user *models.User, req CreateSellerOrderRequest) (*models.LiveOrder, error) {
+	// 检查用户角色是否为卖家：
 	if user.Role != "seller" {
 		return nil, fiber.NewError(fiber.StatusForbidden, "invalid role")
 	}
-
+	// 验证 req 结构体：
 	if err := utils.ValidateStruct(req); err != nil {
 		return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
-
+	// 构造订单：
 	order := models.LiveOrder{
 		BaseOrder: models.BaseOrder{
 			Symbol:    req.Symbol,
@@ -44,7 +46,7 @@ func (s *OrderService) CreateSellerOrder(user *models.User, req CreateSellerOrde
 		Direction: "sell",
 		Status:    "pending",
 	}
-
+	// 正式创建订单，并存入数据库：
 	if err := s.db.Create(&order).Error; err != nil {
 		return nil, fiber.NewError(fiber.StatusInternalServerError, "create failed")
 	}
@@ -56,7 +58,7 @@ func (s *OrderService) CreateSellerOrder(user *models.User, req CreateSellerOrde
 func (s *OrderService) UpdateSellerOrder(sellerID uint, orderID uint, req UpdateSellerOrderRequest) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		var order models.LiveOrder
-		if err := tx.Where("id = ? AND user_id = ?", orderID, sellerID).First(&order).Error; err != nil {
+		if err := tx.Where("id = ? AND creator_id = ?", orderID, sellerID).First(&order).Error; err != nil {
 			return fiber.NewError(fiber.StatusNotFound, "order not found")
 		}
 
@@ -71,10 +73,13 @@ func (s *OrderService) UpdateSellerOrder(sellerID uint, orderID uint, req Update
 	})
 }
 
-// services/order_service.go
+// 获取卖家订单：
 func (s *OrderService) GetSellerOrders(sellerID uint) ([]models.LiveOrder, error) {
 	var orders []models.LiveOrder
-	if err := s.db.Where("user_id = ? AND direction = 'sell'", sellerID).Find(&orders).Error; err != nil {
+	query := s.db.Where("creator_id = ? AND direction = 'sell'", sellerID).Find(&orders)
+	log.Printf("Executing SQL query: %v", query.Statement.SQL.String())
+	log.Printf("Query conditions: %v", query.Statement.Vars)
+	if err := query.Error; err != nil {
 		return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to retrieve seller orders")
 	}
 	return orders, nil
@@ -84,7 +89,7 @@ func (s *OrderService) GetSellerOrders(sellerID uint) ([]models.LiveOrder, error
 func (s *OrderService) CancelSellerOrder(sellerID uint, orderID uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		return tx.Model(&models.LiveOrder{}).
-			Where("id = ? AND user_id = ? AND status = 'pending'", orderID, sellerID).
+			Where("id = ? AND creator_id = ? AND status = 'pending'", orderID, sellerID).
 			Updates(map[string]interface{}{
 				"status":     "cancelled",
 				"deleted_at": gorm.Expr("CURRENT_TIMESTAMP"),
@@ -96,7 +101,7 @@ func (s *OrderService) CancelSellerOrder(sellerID uint, orderID uint) error {
 func (s *OrderService) BatchCancelSellerOrders(sellerID uint, orderIDs []uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		return tx.Model(&models.LiveOrder{}).
-			Where("user_id = ? AND id IN ? AND status = 'pending'", sellerID, orderIDs).
+			Where("creator_id = ? AND id IN ? AND status = 'pending'", sellerID, orderIDs).
 			Updates(map[string]interface{}{
 				"status":     "cancelled",
 				"deleted_at": gorm.Expr("CURRENT_TIMESTAMP"),
@@ -157,7 +162,7 @@ func (s *OrderService) SubmitDraftOrder(salesID uint, draftID uint) error {
 func (s *OrderService) GetAuthorizedDrafts(salesID uint) ([]models.DraftOrder, error) {
 	var drafts []models.DraftOrder
 	err := s.db.
-		Joins("JOIN seller_sales_authorizations ON seller_sales_authorizations.seller_id = draft_orders.user_id").
+		Joins("JOIN seller_sales_authorizations ON seller_sales_authorizations.seller_id = draft_orders.creator_id").
 		Where("seller_sales_authorizations.sales_id = ? AND authorization = 'approved'", salesID).
 		Find(&drafts).Error
 	return drafts, err
@@ -253,7 +258,7 @@ func (s *OrderService) CreateSalesAuthorization(sellerID uint, req CreateAuthori
 func (s *OrderService) CancelUserUnfinishedOrders(userID uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		return tx.Model(&models.LiveOrder{}).
-			Where("user_id = ? AND status IN ('pending', 'draft')", userID).
+			Where("creator_id = ? AND status IN ('pending', 'draft')", userID).
 			Update("status", "cancelled").Error
 	})
 }
@@ -262,7 +267,7 @@ func (s *OrderService) CancelUserUnfinishedOrders(userID uint) error {
 func (s *OrderService) CancelUserOrders(userID uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		return tx.Model(&models.LiveOrder{}).
-			Where("user_id = ? AND status IN ('pending', 'draft')", userID).
+			Where("creator_id = ? AND status IN ('pending', 'draft')", userID).
 			Update("status", "cancelled").Error
 	})
 }

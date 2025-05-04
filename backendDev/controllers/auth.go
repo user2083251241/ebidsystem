@@ -43,7 +43,7 @@ func (ac *AuthController) Register(c *fiber.Ctx) error {
 	}
 	user, err := ac.userService.Register(req)
 	if err != nil {
-		return c.Status(err.Code).JSON(fiber.Map{"error": err.Message})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "User created successfully",
@@ -61,7 +61,7 @@ func (ac *AuthController) Login(c *fiber.Ctx) error {
 	}
 	user, err := ac.userService.Login(req)
 	if err != nil {
-		return c.Status(err.Code).JSON(fiber.Map{"error": err.Message})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	// 生成 JWT
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -86,7 +86,7 @@ func (ac *AuthController) Login(c *fiber.Ctx) error {
 /*当前代码仅标记用户为已删除，但已签发的 JWT 仍可正常使用（需结合黑名单等机制彻底禁用）！
 若需立即失效 Token，必须实现 Token 吊销逻辑（如基于 Redis 的短期 Token 有效期）！*/
 func (ac *AuthController) Logout(c *fiber.Ctx) error {
-	user, err := middleware.GetCurrentUserFromJWT(c)
+	user, err := middleware.GetUserFromJWT(c)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "Failed to get user information",

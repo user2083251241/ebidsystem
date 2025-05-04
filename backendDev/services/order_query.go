@@ -19,7 +19,7 @@ type SellerOrdersStrategy struct {
 }
 
 func (s *SellerOrdersStrategy) Apply(query *gorm.DB) *gorm.DB {
-	return query.Model(&models.LiveOrder{}).Where("user_id = ? AND direction = 'sell'", s.UserID) //明确指定模型
+	return query.Model(&models.LiveOrder{}).Where("creator_id = ? AND direction = 'sell'", s.UserID) //明确指定模型
 }
 
 func (s *SellerOrdersStrategy) GetDTOConverter() func(models.LiveOrder) models.OrderDTO {

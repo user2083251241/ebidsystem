@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"reflect"
 	"syscall"
 
 	"github.com/champNoob/ebidsystem/backend/config"
@@ -19,8 +20,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 )
 
 func main() {
@@ -30,13 +29,16 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	/* 初始化数据库连接 */
+	/* 数据库初始化并连接 */
 
-	dsn := config.Get("DB_DSN")
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	db, err := config.InitDB()
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
+	} else {
+		log.Println("Successfully connected to database")
 	}
+	// 打印 LiveOrder 结构体定义
+	log.Printf("LiveOrder struct: %+v", reflect.TypeOf(models.LiveOrder{}))
 	// 自动迁移数据库表：
 	if err := db.AutoMigrate(
 		&models.BaseOrder{},
@@ -44,6 +46,7 @@ func main() {
 		&models.LiveOrder{},
 		&models.SellerSalesAuthorization{},
 		&models.Trade{},
+		&models.User{},
 		// &models.Stock{},
 	); err != nil {
 		log.Fatalf("Database migration failed: %v", err)
@@ -86,6 +89,9 @@ func main() {
 	/* 注册路由（依赖注入） */
 
 	routes.SetupRoutes(app, db)
+
+	/* 启动撮合引擎 */
+
 	// 启动撮合引擎：
 	me := services.NewMatchingEngine(db)
 	ctx, cancel := context.WithCancel(context.Background())

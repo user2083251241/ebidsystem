@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// AuditLog 审计日志结构体
+// 审计日志结构体
 type AuditLog struct {
 	gorm.Model
 	UserID    uint      `gorm:"not null;index"` // 用户 ID

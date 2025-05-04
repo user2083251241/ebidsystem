@@ -2,11 +2,9 @@ package middleware
 
 import (
 	"github.com/champNoob/ebidsystem/backend/config"
-	_ "github.com/champNoob/ebidsystem/backend/config"
 	"github.com/champNoob/ebidsystem/backend/models"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
-	_ "github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -22,11 +20,41 @@ func JWTMiddleware() fiber.Handler {
 	})
 }
 
-// 从 JWT 中提取用户信息（不查数据库）
+// 从 JWT 中提取用户信息（不查数据库）：
 func GetUserFromJWT(c *fiber.Ctx) (*models.User, error) {
-	token := c.Locals("user").(*jwt.Token)
-	claims := token.Claims.(jwt.MapClaims)
-	userID := uint(claims["user_id"].(float64))
-	role := claims["role"].(string)
-	return &models.User{ID: userID, Role: role}, nil
+	token, ok := c.Locals("user").(*jwt.Token)
+	if !ok {
+		return nil, fiber.NewError(fiber.StatusUnauthorized, "未找到有效的 JWT 令牌")
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fiber.NewError(fiber.StatusUnauthorized, "无效的 JWT 声明")
+	}
+	userIDInterface, exists := claims["user_id"]
+	if !exists {
+		return nil, fiber.NewError(fiber.StatusUnauthorized, "JWT 声明中缺少 user_id")
+	}
+	userIDFloat, ok := userIDInterface.(float64)
+	if !ok {
+		return nil, fiber.NewError(fiber.StatusUnauthorized, "user_id 不是有效的浮点数")
+	}
+	userID := uint(userIDFloat)
+	role, ok := claims["role"].(string)
+	if !ok {
+		return nil, fiber.NewError(fiber.StatusUnauthorized, "role 不是有效的字符串")
+	}
+	ansUser := models.User{
+		ID:   userID,
+		Role: role,
+	}
+	return &ansUser, nil
+}
+
+// 辅助函数：从 JWT 提取 user_id：
+func GetUserIDFromJWT(c *fiber.Ctx) (uint, error) {
+	user, err := GetUserFromJWT(c)
+	if err != nil {
+		return 0, err
+	}
+	return user.ID, nil
 }

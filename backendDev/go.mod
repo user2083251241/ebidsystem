@@ -40,5 +40,4 @@ require (
 	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
-	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 )

@@ -18,10 +18,10 @@ func (bc *BaseController) ValidateRequest(c *fiber.Ctx, req interface{}) error {
 	}
 	if err := bc.OrderService.Validate(req); err != nil {
 		if _, ok := err.(*validator.InvalidValidationError); ok {
-			return fiber.NewError(fiber.StatusInternalServerError, "验证器错误")
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
-		for _, err := range err.(validator.ValidationErrors) {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		if validationErrors, ok := err.(*validator.ValidationErrors); ok {
+			return fiber.NewError(fiber.StatusBadRequest, validationErrors.Error()) //取第一个验证错误信息
 		}
 	}
 	return nil

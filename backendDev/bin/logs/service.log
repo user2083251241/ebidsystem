@@ -5,98 +5,15 @@
  │               http://127.0.0.1:3000               │ 
  │       (bound on host 0.0.0.0 and port 3000)       │ 
  │                                                   │ 
- │ Handlers ............ 33  Processes ........... 1 │ 
- │ Prefork ....... Disabled  PID .............. 1068 │ 
+ │ Handlers ............ 34  Processes ........... 1 │ 
+ │ Prefork ....... Disabled  PID ............. 12348 │ 
  └───────────────────────────────────────────────────┘ 
 
-[MATCH] 00:18:08 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:18:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:18:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:18:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:18:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:18:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:18:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:18:48 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:18:48 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:18:58 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:18:58 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:19:08 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:19:08 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:19:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:19:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:19:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:19:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:19:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:19:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:19:48 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:19:48 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:19:58 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:19:58 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:20:08 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:20:08 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:20:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:20:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:20:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:20:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:20:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:20:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:20:48 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:20:48 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:20:58 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:20:58 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:21:08 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:21:08 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:21:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:21:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:21:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:21:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:21:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:21:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:21:48 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:21:48 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:21:58 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:21:58 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:22:08 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:22:08 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:22:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:22:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:22:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:22:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:22:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:22:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:22:48 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:22:48 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:22:58 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:22:58 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:23:08 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:23:08 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:23:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:23:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:23:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:23:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:23:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:23:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:23:48 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:23:48 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:23:58 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:23:58 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:24:08 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:24:08 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:24:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:24:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:24:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:24:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:24:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:24:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:24:48 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:24:48 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:24:58 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:24:58 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:25:08 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:25:08 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:25:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:25:18 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:25:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:25:28 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:25:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
-[MATCH] 00:25:38 matching.go:57: 有效买入订单数量: 1, 有效卖出订单数量: 1
+[POST] /api/login - Request
+[POST] /api/login - Response Status: 200
+[POST] /api/logout - Request
+[POST] /api/logout - Response Status: 500
+[POST] /api/login - Request
+[POST] /api/login - Response Status: 200
+[POST] /api/logout - Request
+[POST] /api/logout - Response Status: 500
