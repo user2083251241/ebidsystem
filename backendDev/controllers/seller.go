@@ -11,6 +11,9 @@ type SellerController struct {
 }
 
 func NewSellerController(os *services.OrderService) *SellerController {
+	if os == nil {
+		panic("OrderService 未初始化")
+	}
 	return &SellerController{orderService: os}
 }
 
@@ -34,7 +37,7 @@ func (sc *SellerController) SellerCreateOrder(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(order)
 }
 
-// SellerUpdateOrder 卖家修改订单
+// 卖家修改订单：
 func (sc *SellerController) SellerUpdateOrder(c *fiber.Ctx) error {
 	user, err := middleware.GetUserFromJWT(c)
 	if err != nil {
@@ -106,26 +109,23 @@ func (sc *SellerController) SellerGetOrders(c *fiber.Ctx) error {
 	return c.JSON(orders)
 }
 
-// SellerCancelOrder 卖家取消订单
+// 卖家取消单个订单：
 func (sc *SellerController) SellerCancelOrder(c *fiber.Ctx) error {
 	user, err := middleware.GetUserFromJWT(c)
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusUnauthorized, "身份验证失败")
 	}
-
 	orderID, err := c.ParamsInt("id")
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "无效订单ID")
 	}
-
 	if err := sc.orderService.CancelSellerOrder(user.ID, uint(orderID)); err != nil {
-		return ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()}) //直接传递错误状态码和消息
 	}
-
 	return c.SendStatus(fiber.StatusOK)
 }
 
-// SellerBatchCancelOrders 卖家批量取消订单
+// 卖家批量取消订单：
 func (sc *SellerController) SellerBatchCancelOrders(c *fiber.Ctx) error {
 	user, err := middleware.GetUserFromJWT(c)
 	if err != nil {

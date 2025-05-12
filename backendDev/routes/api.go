@@ -41,7 +41,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 		},
 	})
 	// 认证路由组：
-	authenticated := app.Group("/api", jwtMiddleware)
+	authenticated := app.Group("/api", jwtMiddleware, middleware.CheckTokenRevoked())
 	{
 		// 所有认证用户均可调用：
 		authenticated.Post("/logout", authController.Logout) //登出

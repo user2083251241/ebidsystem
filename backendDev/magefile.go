@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -57,25 +58,28 @@ func SetupFirewall() error {
 		fmt.Println("[跳过] 非 Windows 系统无需配置防火墙")
 		return nil
 	}
-
 	fmt.Println("[防火墙] 配置入站规则...")
 	exePath, _ := filepath.Abs(ExePath)
-
-	// 使用 gsudo 提权执行 netsh 命令
+	//删除旧规则（忽略错误）：
 	cmdDelete := exec.Command("gsudo", "netsh", "advfirewall", "firewall", "delete", "rule",
 		"name=Allow "+ProjectName+" Inbound")
 	cmdDelete.Stdout = os.Stdout
 	cmdDelete.Stderr = os.Stderr
 	_ = cmdDelete.Run()
 
+	//添加新规则（路径加双引号）：
 	cmdAdd := exec.Command("gsudo", "netsh", "advfirewall", "firewall", "add", "rule",
 		"name=Allow "+ProjectName+" Inbound",
 		"dir=in",
-		"program="+exePath,
+		"program="+fmt.Sprintf(`"%s"`, exePath),
 		"action=allow")
 	cmdAdd.Stdout = os.Stdout
 	cmdAdd.Stderr = os.Stderr
-	return cmdAdd.Run()
+	if err := cmdAdd.Run(); err != nil {
+		log.Printf("防火墙配置失败: %v", err)
+		return err
+	}
+	return nil
 }
 
 // 启动服务并记录日志

@@ -57,24 +57,27 @@ func (s *OrderService) CreateSellerOrder(user *models.User, req CreateSellerOrde
 // 更新卖家订单：
 func (s *OrderService) UpdateSellerOrder(sellerID uint, orderID uint, req UpdateSellerOrderRequest) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
-		var order models.LiveOrder
-		if err := tx.Where("id = ? AND creator_id = ?", orderID, sellerID).First(&order).Error; err != nil {
-			return fiber.NewError(fiber.StatusNotFound, "order not found")
+		result := tx.Model(&models.LiveOrder{}).
+			Where("id = ? AND creator_id = ? AND status = 'pending'", orderID, sellerID).
+			Updates(map[string]interface{}{
+				"quantity": req.Quantity,
+				"price":    req.Price,
+			})
+		if result.Error != nil {
+			return result.Error
 		}
-
-		if order.Status != "pending" {
-			return fiber.NewError(fiber.StatusBadRequest, "only pending orders can be modified")
+		if result.RowsAffected == 0 {
+			return fiber.NewError(fiber.StatusNotFound, "订单不存在或不可修改")
 		}
-
-		return tx.Model(&order).Updates(map[string]interface{}{
-			"quantity": req.Quantity,
-			"price":    req.Price,
-		}).Error
+		return nil
 	})
 }
 
 // 获取卖家订单：
 func (s *OrderService) GetSellerOrders(sellerID uint) ([]models.LiveOrder, error) {
+	if s.db == nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "数据库实例未初始化")
+	}
 	var orders []models.LiveOrder
 	query := s.db.Where("creator_id = ? AND direction = 'sell'", sellerID).Find(&orders)
 	log.Printf("Executing SQL query: %v", query.Statement.SQL.String())
@@ -88,12 +91,19 @@ func (s *OrderService) GetSellerOrders(sellerID uint) ([]models.LiveOrder, error
 // 取消单个卖家订单：
 func (s *OrderService) CancelSellerOrder(sellerID uint, orderID uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
-		return tx.Model(&models.LiveOrder{}).
+		result := tx.Model(&models.LiveOrder{}).
 			Where("id = ? AND creator_id = ? AND status = 'pending'", orderID, sellerID).
 			Updates(map[string]interface{}{
 				"status":     "cancelled",
 				"deleted_at": gorm.Expr("CURRENT_TIMESTAMP"),
-			}).Error
+			})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return fiber.NewError(fiber.StatusNotFound, "无有效订单可取消")
+		}
+		return nil
 	})
 }
 
@@ -135,17 +145,19 @@ func (s *OrderService) CreateDraftOrder(salesID uint, req CreateDraftRequest) (*
 
 // 更新草稿订单
 func (s *OrderService) UpdateDraftOrder(salesID uint, draftID uint, req UpdateDraftRequest) error {
-	var draft models.DraftOrder
-	if err := s.db.Where("id = ? AND draft_by_sales = ?", draftID, salesID).First(&draft).Error; err != nil {
-		return fiber.NewError(fiber.StatusNotFound, "draft not found")
+	result := s.db.Model(&models.DraftOrder{}).
+		Where("id = ? AND draft_by_sales = ?", draftID, salesID).
+		Updates(map[string]interface{}{
+			"quantity": req.Quantity,
+			"price":    req.Price,
+		})
+	if result.Error != nil {
+		return result.Error
 	}
-
-	updates := map[string]interface{}{
-		"quantity": req.Quantity,
-		"price":    req.Price,
+	if result.RowsAffected == 0 {
+		return fiber.NewError(fiber.StatusNotFound, "草稿不存在或无权修改")
 	}
-
-	return s.db.Model(&draft).Updates(updates).Error
+	return nil
 }
 
 // 提交草稿审批
@@ -254,21 +266,22 @@ func (s *OrderService) CreateSalesAuthorization(sellerID uint, req CreateAuthori
 
 // ---------------------- 所有角色 -------------------------
 
-// 取消用户所有未完成订单
+// 取消用户所有未完成订单：
 func (s *OrderService) CancelUserUnfinishedOrders(userID uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
-		return tx.Model(&models.LiveOrder{}).
+		result := tx.Model(&models.LiveOrder{}).
 			Where("creator_id = ? AND status IN ('pending', 'draft')", userID).
-			Update("status", "cancelled").Error
-	})
-}
+			Updates(map[string]interface{}{
+				"status": "cancelled",
+			})
 
-// 取消用户所有未完成订单：
-func (s *OrderService) CancelUserOrders(userID uint) error {
-	return s.db.Transaction(func(tx *gorm.DB) error {
-		return tx.Model(&models.LiveOrder{}).
-			Where("creator_id = ? AND status IN ('pending', 'draft')", userID).
-			Update("status", "cancelled").Error
+		if result.Error != nil {
+			log.Printf("取消未完成订单失败 | 用户ID: %d | 错误: %v", userID, result.Error)
+			return result.Error
+		}
+
+		log.Printf("已取消未完成订单 | 用户ID: %d | 影响行数: %d", userID, result.RowsAffected)
+		return nil
 	})
 }
 

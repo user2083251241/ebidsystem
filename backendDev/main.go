@@ -8,12 +8,14 @@ import (
 	"os/signal"
 	"reflect"
 	"syscall"
+	"time"
 
 	"github.com/champNoob/ebidsystem/backend/config"
 	"github.com/champNoob/ebidsystem/backend/models"
 	"github.com/champNoob/ebidsystem/backend/routes"
 	"github.com/user2083251241/ebidsystem/middleware"
 	"github.com/user2083251241/ebidsystem/services"
+	"github.com/user2083251241/ebidsystem/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -37,6 +39,7 @@ func main() {
 	} else {
 		log.Println("Successfully connected to database")
 	}
+	config.DB = db
 	// 打印 LiveOrder 结构体定义
 	log.Printf("LiveOrder struct: %+v", reflect.TypeOf(models.LiveOrder{}))
 	// 自动迁移数据库表：
@@ -86,6 +89,15 @@ func main() {
 		},
 	}))
 
+	/* 初始化 Redis */
+	// 在路由注册前调用：
+	utils.InitRedis()
+	// 测试 Redis 连接：
+	if err := utils.RedisClient.Ping(utils.Ctx).Err(); err != nil {
+		log.Fatalf("Redis 连接测试失败: %v", err)
+	}
+	log.Println("Redis 连接测试成功")
+
 	/* 注册路由（依赖注入） */
 
 	routes.SetupRoutes(app, db)
@@ -119,5 +131,15 @@ func main() {
 	fmt.Printf("🚀 Server started on port %s\n", port)
 	if err := app.Listen("0.0.0.0:" + port); err != nil {
 		log.Fatalf("Server startup failed: %v", err)
+	} else {
+		log.Printf("端口 %s 已成功绑定", port)
+	}
+
+	/* 测试 Redis 写入 */
+	testErr := utils.AddToBlacklist("test_token", 10*time.Minute)
+	if testErr != nil {
+		log.Fatalf("Redis 写入测试失败: %v", testErr)
+	} else {
+		log.Println("Redis 写入测试成功")
 	}
 }

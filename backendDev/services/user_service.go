@@ -1,6 +1,8 @@
 package services
 
 import (
+	"log"
+
 	"github.com/champNoob/ebidsystem/backend/models"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -88,7 +90,15 @@ func (us *UserService) GetUserByUsername(username string) (*models.User, error) 
 
 // 删除用户（标记为已删除）：
 func (us *UserService) DeleteUser(userID uint) error {
-	return us.db.Model(&models.User{}).
+	result := us.db.Model(&models.User{}).
 		Where("id = ?", userID).
-		Update("is_deleted", true).Error
+		Update("is_deleted", true)
+
+	if result.Error != nil {
+		log.Printf("用户软删除失败 | 用户ID: %d | 错误: %v", userID, result.Error)
+		return result.Error
+	}
+
+	log.Printf("用户标记为已删除 | 用户ID: %d | 影响行数: %d", userID, result.RowsAffected)
+	return nil
 }

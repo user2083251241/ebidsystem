@@ -3,6 +3,7 @@ package middleware
 import (
 	"github.com/champNoob/ebidsystem/backend/config"
 	"github.com/champNoob/ebidsystem/backend/models"
+	"github.com/champNoob/ebidsystem/backend/utils"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -23,7 +24,7 @@ func JWTMiddleware() fiber.Handler {
 // 从 JWT 中提取用户信息（不查数据库）：
 func GetUserFromJWT(c *fiber.Ctx) (*models.User, error) {
 	token, ok := c.Locals("user").(*jwt.Token)
-	if !ok {
+	if !ok || token == nil {
 		return nil, fiber.NewError(fiber.StatusUnauthorized, "未找到有效的 JWT 令牌")
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
@@ -57,4 +58,14 @@ func GetUserIDFromJWT(c *fiber.Ctx) (uint, error) {
 		return 0, err
 	}
 	return user.ID, nil
+}
+
+func CheckTokenRevoked() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		token := c.Locals("user").(*jwt.Token)
+		if utils.IsTokenRevoked(token.Raw) {
+			return c.Status(401).JSON(fiber.Map{"error": "Token 已失效"})
+		}
+		return c.Next()
+	}
 }
