@@ -98,6 +98,7 @@ backend/
 |   └── assets/                # 前端资源
 ├── utils/                 # 工具函数
 |   ├── ptr.go                 # 指针工具
+|   ├── redis.go               # Redis 工具
 |   └── validation.go          # 校验工具
 ├── .env                   # 环境变量（开发环境配置）
 ├── go.mod                 # Go 模块依赖

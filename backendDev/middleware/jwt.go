@@ -62,10 +62,20 @@ func GetUserIDFromJWT(c *fiber.Ctx) (uint, error) {
 
 func CheckTokenRevoked() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		token := c.Locals("user").(*jwt.Token)
-		if utils.IsTokenRevoked(token.Raw) {
-			return c.Status(401).JSON(fiber.Map{"error": "Token 已失效"})
+		token, ok := c.Locals("user").(*jwt.Token)
+		if !ok {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "无效的 Token",
+			})
 		}
+		// 从 Redis 黑名单中检查 Token:
+		tokenString := token.Raw
+		if utils.IsTokenRevoked(tokenString) {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Token 已失效",
+			})
+		}
+
 		return c.Next()
 	}
 }

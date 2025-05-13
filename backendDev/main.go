@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/champNoob/ebidsystem/backend/config"
+	"github.com/champNoob/ebidsystem/backend/middleware"
 	"github.com/champNoob/ebidsystem/backend/models"
 	"github.com/champNoob/ebidsystem/backend/routes"
-	"github.com/user2083251241/ebidsystem/middleware"
-	"github.com/user2083251241/ebidsystem/services"
-	"github.com/user2083251241/ebidsystem/utils"
+	"github.com/champNoob/ebidsystem/backend/services"
+	"github.com/champNoob/ebidsystem/backend/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"

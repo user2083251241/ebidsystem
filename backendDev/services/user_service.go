@@ -43,11 +43,17 @@ func (us *UserService) Register(req RegisterRequest) (*models.User, error) {
 // 用户登录：
 func (us *UserService) Login(req LoginRequest) (*models.User, error) {
 	var user models.User
+	// 验证用户名：
 	if err := us.db.Where("username = ?", req.Username).First(&user).Error; err != nil {
-		return nil, fiber.NewError(fiber.StatusUnauthorized, "Invalid username or password")
+		return nil, fiber.NewError(fiber.StatusUnauthorized, "用户名或密码错误")
 	}
+	// 检查用户是否已注销：
+	if user.IsDeleted {
+		return nil, fiber.NewError(fiber.StatusForbidden, "用户已注销")
+	}
+	// 验证密码：
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
-		return nil, fiber.NewError(fiber.StatusUnauthorized, "Invalid username or password")
+		return nil, fiber.NewError(fiber.StatusUnauthorized, "用户名或密码错误")
 	}
 	return &user, nil
 }

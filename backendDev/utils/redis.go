@@ -7,47 +7,52 @@ import (
 	"sync"
 	"time"
 
-	"github.com/champNoob/ebidsystem/backend/config"
 	"github.com/redis/go-redis/v9"
+	"github.com/user2083251241/ebidsystem/config"
 )
 
-var RedisClient *redis.Client
-var Ctx = context.Background()
-var redisMutex sync.Mutex //互斥锁
+var (
+	RedisClient *redis.Client
+	Ctx         = context.Background()
+	redisOnce   sync.Once
+	redisMutex  sync.Mutex //互斥锁
+)
 
 func InitRedis() {
-	redisMutex.Lock()
-	defer redisMutex.Unlock()
-	addr := config.Get("REDIS_ADDR")
-	password := config.Get("REDIS_PASSWORD")
-	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
-		DB:       0,
+	/*
+		redisMutex.Lock()
+		defer redisMutex.Unlock()
+		addr := config.Get("REDIS_ADDR")
+		password := config.Get("REDIS_PASSWORD")
+		RedisClient = redis.NewClient(&redis.Options{
+			Addr:     addr,
+			Password: password,
+			DB:       0,
+		})
+		//测试连接是否成功：
+		_, err := RedisClient.Ping(Ctx).Result()
+		if err != nil {
+			log.Fatalf("Redis 连接失败: %v", err) //终止应用并记录错误
+		}
+		log.Println("Redis 连接成功")
+	*/
+	redisOnce.Do(func() {
+		redisMutex.Lock()
+		defer redisMutex.Unlock()
+		addr := config.Get("REDIS_ADDR")
+		password := config.Get("REDIS_PASSWORD")
+		RedisClient = redis.NewClient(&redis.Options{
+			Addr:     addr,
+			Password: password,
+			DB:       0,
+		})
+		//测试连接是否成功：
+		_, err := RedisClient.Ping(Ctx).Result()
+		if err != nil {
+			log.Fatalf("Redis 连接失败: %v", err) //终止应用并记录错误
+		}
+		log.Println("Redis 连接成功")
 	})
-	//测试连接是否成功：
-	_, err := RedisClient.Ping(Ctx).Result()
-	if err != nil {
-		log.Fatalf("Redis 连接失败: %v", err) //终止应用并记录错误
-	}
-	log.Println("Redis 连接成功")
-	// redisOnce.Do(func() {
-	// 	redisMutex.Lock()
-	// 	defer redisMutex.Unlock()
-	// 	addr := config.Get("REDIS_ADDR")
-	// 	password := config.Get("REDIS_PASSWORD")
-	// 	RedisClient = redis.NewClient(&redis.Options{
-	// 		Addr:     addr,
-	// 		Password: password,
-	// 		DB:       0,
-	// 	})
-	// 	//测试连接是否成功：
-	// 	_, err := RedisClient.Ping(Ctx).Result()
-	// 	if err != nil {
-	// 		log.Fatalf("Redis 连接失败: %v", err) //终止应用并记录错误
-	// 	}
-	// 	log.Println("Redis 连接成功")
-	// })
 }
 
 func AddToBlacklist(token string, expiration time.Duration) error {
@@ -68,7 +73,7 @@ func AddToBlacklist(token string, expiration time.Duration) error {
 
 func IsTokenRevoked(token string) bool {
 	if RedisClient == nil {
-		return false //或返回错误
+		return false
 	}
 	exists, _ := RedisClient.Exists(Ctx, "jti:"+token).Result()
 	return exists > 0

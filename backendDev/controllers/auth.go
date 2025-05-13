@@ -121,7 +121,7 @@ func (ac *AuthController) Logout(c *fiber.Ctx) error {
 			"error": "Token 有效期无效",
 		})
 	}
-	// 计算剩余有效期：
+	// 计算剩余 Token 有效期：
 	expiration := time.Until(time.Unix(int64(exp), 0))
 	if expiration < 0 {
 		log.Printf("Token 已过期 | Exp: %v", time.Unix(int64(exp), 0))
