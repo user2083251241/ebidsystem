@@ -12,10 +12,10 @@ import (
 )
 
 func SetupRoutes(app *fiber.App, db *gorm.DB) {
-	// 初始化服务层：
-	orderService := services.NewOrderService(db)
-	userService := services.NewUserService(db)
-	// 初始化控制器：
+	// 先初始化服务层：
+	orderService := services.NewOrderService(db)             //先订单
+	userService := services.NewUserService(db, orderService) //后用户
+	// 再初始化控制器：
 	authController := controllers.NewAuthController(userService)
 	sellerController := controllers.NewSellerController(orderService)
 	salesController := controllers.NewSalesController(orderService)
@@ -41,7 +41,12 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 		},
 	})
 	// 认证路由组：
-	authenticated := app.Group("/api", jwtMiddleware, middleware.CheckTokenRevoked())
+	authenticated := app.Group("/api",
+		jwtMiddleware,
+		middleware.CheckTokenRevoked(),
+		middleware.CheckUserActive(db),
+		middleware.AttachUserToContext(),
+	)
 	{
 		// 所有认证用户均可调用：
 		authenticated.Post("/logout", authController.Logout) //登出

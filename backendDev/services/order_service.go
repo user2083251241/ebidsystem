@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/champNoob/ebidsystem/backend/models"
@@ -269,18 +270,42 @@ func (s *OrderService) CreateSalesAuthorization(sellerID uint, req CreateAuthori
 // 取消用户所有未完成订单：
 func (s *OrderService) CancelUserUnfinishedOrders(userID uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
-		result := tx.Model(&models.LiveOrder{}).
-			Where("creator_id = ? AND status IN ('pending', 'draft')", userID).
+		// 取消用户创建的正式订单
+		if err := tx.Model(&models.LiveOrder{}).
+			Where("creator_id = ? AND status = ?", userID, "pending").
 			Updates(map[string]interface{}{
 				"status": "cancelled",
-			})
-
-		if result.Error != nil {
-			log.Printf("取消未完成订单失败 | 用户ID: %d | 错误: %v", userID, result.Error)
-			return result.Error
+			}).Error; err != nil {
+			log.Printf("取消用户创建的订单失败 | 用户ID: %d | 错误: %v", userID, err)
+			return fiber.NewError(fiber.StatusInternalServerError, "取消订单失败："+err.Error())
 		}
 
-		log.Printf("已取消未完成订单 | 用户ID: %d | 影响行数: %d", userID, result.RowsAffected)
+		// 取消用户相关的草稿订单
+		if err := tx.Model(&models.DraftOrder{}).
+			Where("creator_id = ? AND status = ?", userID, "draft").
+			Updates(map[string]interface{}{
+				"status": "cancelled",
+			}).Error; err != nil {
+			// 如果表不存在，跳过这个错误（因为用户可能没有草稿订单）
+			if !strings.Contains(err.Error(), "doesn't exist") {
+				log.Printf("取消用户相关草稿订单失败 | 用户ID: %d | 错误: %v", userID, err)
+				return fiber.NewError(fiber.StatusInternalServerError, "取消草稿订单失败："+err.Error())
+			}
+			log.Printf("草稿订单表不存在，跳过 | 用户ID: %d", userID)
+		}
+
+		// 取消用户的授权关系
+		if err := tx.Where("seller_id = ? OR sales_id = ?", userID, userID).
+			Delete(&models.SellerSalesAuthorization{}).Error; err != nil {
+			// 如果表不存在，跳过这个错误（因为用户可能没有授权关系）
+			if !strings.Contains(err.Error(), "doesn't exist") {
+				log.Printf("取消用户授权关系失败 | 用户ID: %d | 错误: %v", userID, err)
+				return fiber.NewError(fiber.StatusInternalServerError, "取消授权关系失败："+err.Error())
+			}
+			log.Printf("授权关系表不存在，跳过 | 用户ID: %d", userID)
+		}
+
+		log.Printf("已成功取消所有相关订单和授权 | 用户ID: %d", userID)
 		return nil
 	})
 }

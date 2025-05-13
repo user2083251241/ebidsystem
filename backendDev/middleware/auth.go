@@ -22,6 +22,7 @@ func RoleRequired(role string) fiber.Handler {
 	}
 }
 
+// 将用户信息附加到上下文：
 func AttachUserToContext() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		user, err := GetUserFromJWT(c)
@@ -33,7 +34,7 @@ func AttachUserToContext() fiber.Handler {
 	}
 }
 
-// 完整用户信息（需查数据库）
+// 完整用户信息（需查数据库）：
 func GetFullUserInfoFromDB(c *fiber.Ctx, db *gorm.DB) (*models.User, error) {
 	userID, err := GetUserIDFromJWT(c)
 	if err != nil {
@@ -46,6 +47,7 @@ func GetFullUserInfoFromDB(c *fiber.Ctx, db *gorm.DB) (*models.User, error) {
 	return &user, nil
 }
 
+// 草稿授权：
 func DraftAuthorization(db *gorm.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		draftID := c.Params("id")
@@ -57,6 +59,34 @@ func DraftAuthorization(db *gorm.DB) fiber.Handler {
 		if draft.CreatorID != user.ID {
 			return c.Status(403).JSON(fiber.Map{"error": "无权操作此草稿"})
 		}
+		return c.Next()
+	}
+}
+
+// 检查用户是否已注销：
+func CheckUserActive(db *gorm.DB) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		user, err := GetUserFromJWT(c)
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "无效的用户信息",
+			})
+		}
+
+		// 从数据库获取最新的用户状态
+		var dbUser models.User
+		if err := db.First(&dbUser, user.ID).Error; err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "用户不存在",
+			})
+		}
+
+		if dbUser.IsDeleted {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "用户已注销",
+			})
+		}
+
 		return c.Next()
 	}
 }

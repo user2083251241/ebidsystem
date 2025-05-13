@@ -2,20 +2,24 @@ package services
 
 import (
 	"log"
+	"time"
 
 	"github.com/champNoob/ebidsystem/backend/models"
+	"github.com/champNoob/ebidsystem/backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 type UserService struct {
-	db *gorm.DB
+	db           *gorm.DB
+	orderService *OrderService
 }
 
-func NewUserService(db *gorm.DB) *UserService {
+func NewUserService(db *gorm.DB, orderService *OrderService) *UserService {
 	return &UserService{
-		db: db,
+		db:           db,
+		orderService: orderService,
 	}
 }
 
@@ -59,18 +63,31 @@ func (us *UserService) Login(req LoginRequest) (*models.User, error) {
 }
 
 // 用户注销：
-func (us *UserService) Logout(userID uint) error {
-	if err := us.db.Model(&models.LiveOrder{}).
-		Where("user_id = ? AND status IN ('pending', 'draft')", userID).
-		Update("status", "cancelled").Error; err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "注销失败")
-	}
-	if err := us.db.Model(&models.User{}).
-		Where("id = ?", userID).
-		Update("is_deleted", true).Error; err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "注销失败")
-	}
-	return nil
+func (us *UserService) Logout(userID uint, token string, tokenExp time.Duration) error {
+	return us.db.Transaction(func(tx *gorm.DB) error {
+		// 1. 将 token 加入黑名单
+		if err := utils.AddToBlacklist(token, tokenExp); err != nil {
+			log.Printf("Token加入黑名单失败 | 用户ID: %d | 错误: %v", userID, err)
+			return fiber.NewError(fiber.StatusInternalServerError, "注销失败：token处理错误")
+		}
+
+		// 2. 取消订单和授权
+		if err := us.orderService.CancelUserUnfinishedOrders(userID); err != nil {
+			log.Printf("取消订单失败 | 用户ID: %d | 错误: %v", userID, err)
+			return fiber.NewError(fiber.StatusInternalServerError, "注销失败：订单取消错误")
+		}
+
+		// 3. 标记用户为已删除
+		if err := tx.Model(&models.User{}).
+			Where("id = ?", userID).
+			Update("is_deleted", true).Error; err != nil {
+			log.Printf("用户标记删除失败 | 用户ID: %d | 错误: %v", userID, err)
+			return fiber.NewError(fiber.StatusInternalServerError, "注销失败：用户状态更新错误")
+		}
+
+		log.Printf("用户注销成功 | 用户ID: %d", userID)
+		return nil
+	})
 }
 
 // 检查用户名是否已存在：

@@ -38,7 +38,11 @@ type OrderDTO struct {
 	// 隐藏 DraftBySales、SellerID 等字段
 }
 
-// 表名自定义（可选）
-func (BaseOrder) TableName() string {
-	return "orders"
+// 表名定义
+func (LiveOrder) TableName() string {
+	return "live_orders"
+}
+
+func (DraftOrder) TableName() string {
+	return "draft_orders"
 }
