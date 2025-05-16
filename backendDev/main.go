@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"reflect"
 	"syscall"
 	"time"
 
@@ -40,8 +39,7 @@ func main() {
 		log.Println("Successfully connected to database")
 	}
 	config.DB = db
-	// 打印 LiveOrder 结构体定义
-	log.Printf("LiveOrder struct: %+v", reflect.TypeOf(models.LiveOrder{}))
+	//log.Printf("LiveOrder struct: %+v", reflect.TypeOf(models.LiveOrder{})) //打印 LiveOrder 结构体定义
 	// 自动迁移数据库表：
 	if err := db.AutoMigrate(
 		&models.BaseOrder{},

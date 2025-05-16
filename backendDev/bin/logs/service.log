@@ -6,20 +6,6 @@
  │       (bound on host 0.0.0.0 and port 3000)       │ 
  │                                                   │ 
  │ Handlers ............ 37  Processes ........... 1 │ 
- │ Prefork ....... Disabled  PID ............. 25972 │ 
+ │ Prefork ....... Disabled  PID ............. 22336 │ 
  └───────────────────────────────────────────────────┘ 
 
-[POST] /api/login - Request
-[POST] /api/login - Response Status: 200
-[POST] /api/seller/orders - Request
-[POST] /api/seller/orders - Response Status: 201
-[GET] /api/seller/orders - Request
-[GET] /api/seller/orders - Response Status: 200
-[POST] /api/logout - Request
-[POST] /api/logout - Response Status: 401
-[POST] /api/logout - Request
-[POST] /api/logout - Response Status: 200
-[GET] /api/seller/orders - Request
-[GET] /api/seller/orders - Response Status: 401
-[POST] /api/login - Request
-[POST] /api/login - Response Status: 500
