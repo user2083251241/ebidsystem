@@ -16,13 +16,11 @@ import (
 func TestMain(m *testing.M) {
 	// 设置测试环境
 	setupTestEnv()
-
 	// 运行测试
 	code := m.Run()
-
 	// 清理测试环境
 	cleanupTestEnv()
-
+	// 退出测试
 	os.Exit(code)
 }
 
@@ -47,7 +45,6 @@ func setupTestDB(t testing.TB) *gorm.DB {
 			t.Fatalf("failed to connect database: %v", err)
 		}
 	}
-
 	// 切换到测试数据库
 	err := db.Exec("CREATE DATABASE IF NOT EXISTS ebidsystem_test").Error
 	if err != nil {
@@ -57,17 +54,15 @@ func setupTestDB(t testing.TB) *gorm.DB {
 	if err != nil {
 		t.Fatalf("failed to switch to test database: %v", err)
 	}
-
 	// 清理测试数据
 	db.Exec("DROP TABLE IF EXISTS trades")
 	db.Exec("DROP TABLE IF EXISTS live_orders")
-
 	// 自动迁移模式
 	err = db.AutoMigrate(&models.LiveOrder{}, &models.Trade{})
 	if err != nil {
 		t.Fatalf("failed to migrate database: %v", err)
 	}
-
+	// 返回数据库连接
 	return db
 }
 
@@ -109,7 +104,6 @@ func TestMatchingEngine(t *testing.T) {
 
 	t.Run("Basic Matching", func(t *testing.T) {
 		engine := NewMatchingEngine(db)
-
 		// 创建基础订单信息
 		baseOrderBuy := models.BaseOrder{
 			Symbol:    "BTC/USDT",
@@ -118,7 +112,6 @@ func TestMatchingEngine(t *testing.T) {
 			Price:     50000,
 			CreatorID: uint(1),
 		}
-
 		// 创建并保存买单
 		buyOrder := models.LiveOrder{
 			BaseOrder: baseOrderBuy,
@@ -128,7 +121,6 @@ func TestMatchingEngine(t *testing.T) {
 		if err := db.Create(&buyOrder).Error; err != nil {
 			t.Fatalf("Failed to create buy order: %v", err)
 		}
-
 		// 创建并保存卖单
 		baseOrderSell := models.BaseOrder{
 			Symbol:    "BTC/USDT",
@@ -145,11 +137,9 @@ func TestMatchingEngine(t *testing.T) {
 		if err := db.Create(&sellOrder).Error; err != nil {
 			t.Fatalf("Failed to create sell order: %v", err)
 		}
-
 		// 执行撮合
 		err := engine.processBatch([]models.LiveOrder{buyOrder}, []models.LiveOrder{sellOrder})
 		assert.NoError(t, err)
-
 		// 验证结果
 		var trade models.Trade
 		err = db.First(&trade).Error

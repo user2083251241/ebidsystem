@@ -90,6 +90,7 @@ backend/
 │   └── api.go                # API 路由注册
 ├── services/              # 核心业务逻辑
 │   ├── matching.go           # 订单撮合引擎
+│   ├── matching_test.go      # 订单撮合引擎测试（单元测试）
 │   ├── order_query.go        # 订单查询管理
 │   ├── order_services.go     # 订单业务管理
 │   ├── requests.go           # 订单请求管理
@@ -307,31 +308,15 @@ app.Static("/assets", "./static/assets")
 ### 运行时序图
 
 ```mermaid
-sequenceDiagram
-    participant T as 定时任务
-    participant M as MatchOrders()
-    participant DB as 数据库
-    participant B as 买入订单
-    participant S as 卖出订单
-
-    T->>M: 每5秒触发一次
-    M->>DB: 查询所有pending的buy_orders
-    DB-->>M: 返回buy_orders列表
-    M->>DB: 查询所有pending的sell_orders
-    DB-->>M: 返回sell_orders列表
-
-    loop 撮合循环
-        M->>B: 取最高价买单
-        M->>S: 取最低价卖单
-        alt 价格匹配?
-            M->>DB: 开启事务
-            M->>DB: 更新订单状态
-            M->>DB: 插入trade记录
-            DB-->>M: 事务提交结果
-        else 不匹配
-            M->>S: 尝试下一个卖单
-        end
-    end
+graph TD
+   A[TestMain] --> B[setupTestEnv]
+   B --> C[TestMatchingEngine]
+   B --> D[TestConcurrentMatching]
+   C --> E[Basic Matching Test]
+   D --> F[Concurrent Order Generation]
+   F --> G[Multiple Trade Execution]
+   G --> H[Result Verification]
+   C & D --> I[cleanupTestEnv]
 ```
 
 ### 函数调用关系
