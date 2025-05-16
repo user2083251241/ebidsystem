@@ -45,12 +45,13 @@ backend/
 │       ├── error.log            # 单独记录错误级别的日志（可通过日志库的 Level 过滤）
 │       └── match.log            # 存放撮合引擎业务日志
 ├── config/                # 配置管理
-│   └── config.go             # 读取环境变量
+│   ├── config.go             # 读取环境变量
+│   └── database.go           # 构建全局数据库实例并初始化数据库连接
 ├── controllers/           # 控制器（处理 HTTP 请求）
-│   ├── auth.go               # 注册/登录/注销
+│   ├── auth.go               # 专注认证与授权逻辑（注册/登录/注销）
+│   ├── base_controller.go    # 基础控制器（复用请求解析和校验）
 │   ├── client.go             # 客户相关功能
-│   ├── common.go             # 公共控制器（如对数据库/JWT/错误的处理）
-│   ├── order.go              # 订单创建、查询、取消
+│   ├── common.go             # 公共控制器（与业务无关的通用工具，如对数据库/JWT/错误的处理）
 │   ├── sales.go              # 销售相关功能（草稿、提交审批）
 │   ├── seller.go             # 卖家授权管理
 │   └── trader.go             # 交易员授权管理
@@ -59,21 +60,32 @@ backend/
 │   ├── jwt.go                # JWT 认证中间件
 │   └── logging.go            # 请求日志中间件
 ├── models/                # 数据模型定义
-│   ├── user.go               # 用户模型
+│   ├── audit_log.go          # 审计日志结构体
+│   ├── authorization.go      # 卖家-销售授权模型
 │   ├── order.go              # 订单模型
 │   ├── stock.go              # 股票模型（暂不实现）
 │   ├── trades.go             # 成交信息（撮合成功后）
-│   └── authorization.go      # 卖家-销售授权模型（已定义在 ./user.go 中，暂不独立出来）
+│   └── user.go               # 用户模型
 ├── routes/                # 路由定义
 │   └── api.go                # API 路由注册
 ├── services/              # 核心业务逻辑
 │   ├── matching.go           # 订单撮合引擎
-│   └── order.go              # 订单状态管理
+│   ├── matching_test.go      # 订单撮合引擎测试（单元测试）
+│   ├── order_query.go        # 订单查询管理
+│   ├── order_services.go     # 订单业务管理
+│   ├── requests.go           # 订单请求管理
+│   └── user_services.go      # 用户管理（注册、登录、注销等）
+├── static/                # 静态资源
+|   └── assets/                # 前端资源
+├── utils/                 # 工具函数
+|   ├── ptr.go                 # 指针工具
+|   ├── redis.go               # Redis 工具
+|   └── validation.go          # 校验工具
 ├── .env                   # 环境变量（开发环境配置）
 ├── go.mod                 # Go 模块依赖
 ├── go.sum                 # 依赖校验
-├── main.go                # 应用入口（初始化、启动服务）
-└── magefile.go            # 自动化构建文件（取得管理员权限+授权通过防火墙+编译+运行+输出日志）
+├── magefile.go            # 自动化构建文件（取得管理员权限+授权通过防火墙+编译+运行+输出日志）
+└── main.go                # 应用入口（初始化、启动服务）
 ```
 
 ### 前端(`./frontendDev`)
