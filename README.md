@@ -58,54 +58,140 @@
 
 ```tree
 backend/
-├── bin/                   # 编译输出目录
-│   ├── ebidsystem.exe        # 可执行文件
-│   └── logs                  # 日志目录
-│       ├── service.log          # 存放 HTTP 请求、错误日志等通用日志
-│       ├── error.log            # 单独记录错误级别的日志（可通过日志库的 Level 过滤）
-│       └── match.log            # 存放撮合引擎业务日志
-├── config/                # 配置管理
-│   ├── config.go             # 读取环境变量
-│   └── database.go           # 构建全局数据库实例并初始化数据库连接
-├── controllers/           # 控制器（处理 HTTP 请求）
-│   ├── auth.go               # 专注认证与授权逻辑（注册/登录/注销）
-│   ├── base_controller.go    # 基础控制器（复用请求解析和校验）
-│   ├── client.go             # 客户相关功能
-│   ├── common.go             # 公共控制器（与业务无关的通用工具，如对数据库/JWT/错误的处理）
-│   ├── sales.go              # 销售相关功能（草稿、提交审批）
-│   ├── seller.go             # 卖家授权管理
-│   └── trader.go             # 交易员授权管理
-├── middleware/            # 中间件定义
-│   ├── auth.go               # 角色权限校验中间件（如 SellerOnly, SalesOnly）
-│   ├── jwt.go                # JWT 认证中间件
-│   └── logging.go            # 请求日志中间件
-├── models/                # 数据模型定义
-│   ├── audit_log.go          # 审计日志结构体
-│   ├── authorization.go      # 卖家-销售授权模型
-│   ├── order.go              # 订单模型
-│   ├── stock.go              # 股票模型（暂不实现）
-│   ├── trades.go             # 成交信息（撮合成功后）
-│   └── user.go               # 用户模型
-├── routes/                # 路由定义
-│   └── api.go                # API 路由注册
-├── services/              # 核心业务逻辑
-│   ├── matching.go           # 订单撮合引擎
-│   ├── matching_test.go      # 订单撮合引擎测试（单元测试）
-│   ├── order_query.go        # 订单查询管理
-│   ├── order_services.go     # 订单业务管理
-│   ├── requests.go           # 订单请求管理
-│   └── user_services.go      # 用户管理（注册、登录、注销等）
-├── static/                # 静态资源
-|   └── assets/                # 前端资源
-├── utils/                 # 工具函数
-|   ├── ptr.go                 # 指针工具
-|   ├── redis.go               # Redis 工具
-|   └── validation.go          # 校验工具
-├── .env                   # 环境变量（开发环境配置）
-├── go.mod                 # Go 模块依赖
-├── go.sum                 # 依赖校验
-├── magefile.go            # 自动化构建文件（取得管理员权限+授权通过防火墙+编译+运行+输出日志）
-└── main.go                # 应用入口（初始化、启动服务）
+project/
+├── bin/                               # 编译后的二进制文件
+│   └── api                               # API服务器二进制文件
+│
+├── cmd/                               # 应用程序入口点
+│   └── api/						            # 应用程序入口点
+│       └── main.go                          # 主函数（应用程序启动、依赖注入配置）
+│
+├── configs/                           # 配置文件
+│   ├── app.yaml                          # 应用配置文件
+│   ├── test.yaml                         # 测试环境配置
+│   └── production.yaml              		# 生产环境配置
+│
+├── internal/                          # 私有应用程序代码
+│   ├── app/                              # 应用层
+│   │   ├── container/                       # 依赖注入容器 package container
+│   │   │   ├── container. Go               	   # 依赖注入容器
+│   │   │   └── container_test.go        			# 容器测试
+│   │   └── config/					            # package config 对应原项目 ./config/*
+│   │       ├── config.go                 		# 配置加载
+│   │       ├── config_test.go             		# 配置测试
+│   │       ├── database.go                		# 数据库配置
+│   │       └── database_test.go           		# 数据库配置测试
+│   │
+│   ├── domain/                           # 领域层
+│   │   ├── entity/                          # 领域实体 package entity 对应原项目 ./models/*
+│   │   │   ├── order.go                   		# 订单实体
+│   │   │   ├── order_test.go              		# 订单实体测试
+│   │   │   ├── user.go                    		# 用户实体
+│   │   │   ├── user_test.go               		# 用户实体测试
+│   │   │   ├── trade.go                   		# 交易实体
+│   │   │   └── trade_test.go              		# 交易实体测试
+│   │   │
+│   │   ├── repository/               			# 仓储接口 package repository 
+│   │   │   ├── order.go                			# 订单仓储接口
+│   │   │   └── user.go                    		# 用户仓储接口
+│   │   │
+│   │   └── matching/                   		# 领域服务（核心业务逻辑） package matching 对应原项目 ./services/matching/matching.go
+│   │       ├── engine.go                  		# 撮合引擎
+│   │       └── engine_test.go             		# 撮合引擎测试
+│   │
+│   ├── infrastructure/            	      # 基础设施层
+│   │   ├── persistence/                		# 持久化实现
+│   │   │   ├── mysql/                     		# package mysql 对应原项目 ./models/* 中的数据库操作部分
+│   │   │   │   ├── order_repo.go          			# MySQL 订单仓储实现
+│   │   │   │   ├── order_repo_test.go     			# 订单仓储测试
+│   │   │   │   ├── user_repo.go           			# MySQL 用户仓储实现
+│   │   │   │   └── user_repo_test.go      			# 用户仓储测试
+│   │   │   └── redis/						         # package redis
+│   │   │       ├── cache.go               			# Redis 缓存实现
+│   │   │       └── cache_test.go          			# Redis 缓存测试
+│   │   │
+│   │   ├── messaging/      				      # 消息队列
+│   │   │   └── kafka/						         # package kafka
+│   │   │       ├── producer.go            			# Kafka生产者
+│   │   │       └── producer_test.go       			# 生产者测试
+│   │   │
+│   │   └── security/                      	# 安全相关
+│   │       └── jwt/							         # package jwt
+│   │           ├── token.go               			# JWT 实现
+│   │           └── token_test.go          			# JWT 测试
+│
+│   ├── interfaces/             			   # 接口层
+│   │   └── http/                          	# HTTP接口
+│   │       ├── dto/                       		# 数据传输对象 package dto 对应原项目 ./services/requests.go
+│   │       │   ├── order.go               		# 订单 DTO
+│   │       │   └── auth.go                		# 认证 DTO
+│   │       │
+│   │       ├── handler/                   	   # HTTP 处理器 package handler 对应原项目 ./controllers/*
+│   │       │   ├── order.go               		   # 订单处理器
+│   │       │   ├── order_test.go         	 	   # 订单处理器测试
+│   │       │   ├── auth.go                		   # 认证处理器
+│   │       │   └── auth_test.go           		   # 认证处理器测试
+│   │       │
+│   │       ├── middleware/                		# HTTP 中间件 package middleware
+│   │       │   ├── auth.go                			# 认证中间件
+│   │       │   ├── auth_test.go           			# 认证中间件测试
+│   │       │   ├── http_logger.go         			# HTTP 日志中间件
+│   │       │   └── rate_limit.go          			# 限流中间件
+│   │       │
+│   │       └── router/                    		# 路由配置 package router
+│   │           ├── router.go              			# 路由注册
+│   │           └── router_test.go         			# 路由测试
+│   │
+│   └── usecase/             			      # 用例层（替代原application层）
+│       ├── order/                         	# package orderusecase 对应原项目 ./services/order/order_service.go
+│       │   ├── service.go                 		# 订单用例
+│       │   ├── service_test.go            		# 订单用例测试
+│       │   └── dto.go                     		# 内部DTO
+│       └── auth/						            # package authusecase 对应原项目 ./services/user/user_service.go
+│           ├── service.go                 		# 认证用例
+│           └── service_test.go            		# 认证用例测试
+│
+├── pkg/                               # 公共代码包 对应原项目 ./utils/*
+│   ├── logger/					            # 日志 package logger 
+│   │   ├── logger.go                      	# 日志接口定义
+│   │   └── zap.go                        	# Zap实现
+│   ├── errors/					            # 错误 package errors
+│   │   ├── errors.go                      	# 错误接口定义
+│   │   └── impl.go                        	# 错误实现
+│   └── utils/						            # 通用工具
+│       ├── validator.go                   	# package utils - 通用验证
+│       └── time.go                        	# package utils - 时间工具
+│
+├── tests/                             # 集成测试和 E2E 测试
+│   ├── integration/                      # 集成测试
+│   │   └── api/						            # package integration
+│   │       └── order_flow_test.go         		# 订单流程测试
+│   │
+│   └── e2e/                              # 端到端测试 package e2e
+│       └── trading_flow_test.go           	# 交易流程测试
+│
+├── build/                             # 构建相关
+│   ├── Dockerfile                        # Docker 构建文件
+│   └── docker-compose.yml                # 容器编排配置
+│
+├── deployments/                       # 部署配置
+│   ├── kubernetes/                    	# K8s 配置
+│   └── terraform/                        # 基础设施即代码
+│
+├── docs/                              # 文档
+│   ├── api/						            # API 文档
+│   │   └── swagger.yaml                   	# swagger 文档
+│   └── architecture/				         # 架构设计
+│       └── design.md                      	# 架构设计文档
+│
+├── scripts/                           # 脚本
+│   ├── build.sh                          # 构建脚本
+│   └── deploy.sh                         # 部署脚本
+│
+├── magefile.go                        # 项目管理命令
+├── go.mod                                # Go 模块定义
+├── go.sum                                # 依赖版本锁定
+└── README.md                          # 项目说明
 ```
 
 ### `CSM` 分层
