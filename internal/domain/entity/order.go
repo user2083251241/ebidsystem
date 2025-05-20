@@ -1,6 +1,8 @@
-package models
+package entity
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -29,13 +31,26 @@ type LiveOrder struct {
 	// ApprovedBy uint   //审批人（卖家ID）
 }
 
-type OrderDTO struct {
-	ID       uint    `json:"id"`
-	Symbol   string  `json:"symbol"`
-	Price    float64 `json:"price"`
-	Quantity int     `json:"quantity,omitempty"` //对客户隐藏
-	Status   string  `json:"status,omitempty"`   //对客户和销售隐藏
-	// 隐藏 DraftBySales、SellerID 等字段
+// 订单状态枚举
+type OrderStatus string
+
+const (
+	StatusPending         OrderStatus = "pending"
+	StatusFilled          OrderStatus = "filled"
+	StatusCancelled       OrderStatus = "cancelled"
+	StatusDraft           OrderStatus = "draft"
+	StatusPendingApproval OrderStatus = "pending_approval"
+)
+
+// 订单统计信息
+type OrderStats struct {
+	TotalOrders      int            `gorm:"-"` // 总订单数
+	AveragePrice     float64        `gorm:"-"` // 平均价格
+	TotalQuantity    int            `gorm:"-"` // 总数量
+	LastUpdated      time.Time      `gorm:"-"` // 最后更新时间
+	TotalValue       float64        `gorm:"-"` // 总金额
+	AverageQuantity  int            `gorm:"-"` // 平均数量
+	OrderCountByType map[string]int `gorm:"-"` // 按类型统计
 }
 
 // 表名定义

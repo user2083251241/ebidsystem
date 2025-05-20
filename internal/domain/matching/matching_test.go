@@ -1,4 +1,4 @@
-package services
+package matching
 
 import (
 	"context"
@@ -7,9 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/champNoob/ebidsystem/backend/config"
-	"github.com/champNoob/ebidsystem/backend/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/user2083251241/ebidsystem/config"
 	"gorm.io/gorm"
 )
 

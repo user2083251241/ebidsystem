@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/user2083251241/ebidsystem/config"
+	"github.com/user2083251241/ebidsystem/internal/app/config"
 )
 
 var (
@@ -19,23 +19,6 @@ var (
 )
 
 func InitRedis() {
-	/*
-		redisMutex.Lock()
-		defer redisMutex.Unlock()
-		addr := config.Get("REDIS_ADDR")
-		password := config.Get("REDIS_PASSWORD")
-		RedisClient = redis.NewClient(&redis.Options{
-			Addr:     addr,
-			Password: password,
-			DB:       0,
-		})
-		//测试连接是否成功：
-		_, err := RedisClient.Ping(Ctx).Result()
-		if err != nil {
-			log.Fatalf("Redis 连接失败: %v", err) //终止应用并记录错误
-		}
-		log.Println("Redis 连接成功")
-	*/
 	redisOnce.Do(func() {
 		redisMutex.Lock()
 		defer redisMutex.Unlock()

@@ -1,9 +1,9 @@
-package controllers
+package handler
 
 import (
-	"github.com/champNoob/ebidsystem/backend/middleware"
-	"github.com/champNoob/ebidsystem/backend/services"
 	"github.com/gofiber/fiber/v2"
+	"github.com/user2083251241/ebidsystem/middleware"
+	"github.com/user2083251241/ebidsystem/services"
 )
 
 type SalesController struct {

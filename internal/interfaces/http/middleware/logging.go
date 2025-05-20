@@ -1,17 +1,16 @@
 package middleware
 
 import (
-	"fmt"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/user2083251241/ebidsystem/internal/app/config"
 )
 
-func LoggingMiddleware(c *fiber.Ctx) error {
-	// 请求前日志：
-	fmt.Printf("[%s] %s - Request\n", c.Method(), c.Path())
-	// 继续处理请求：
-	err := c.Next()
-	// 请求后日志：
-	fmt.Printf("[%s] %s - Response Status: %d\n", c.Method(), c.Path(), c.Response().StatusCode())
-	return err
+// 日志中间件
+func LoggerMiddleware() fiber.Handler {
+	return logger.New(logger.Config{
+		Format:     "${time} ${status} ${method} ${path}\n",
+		TimeFormat: "2006-01-02 15:04:05",
+		TimeZone:   config.Get("TIMEZONE"),
+	})
 }

@@ -1,13 +1,13 @@
 package routes
 
 import (
-	"github.com/champNoob/ebidsystem/backend/config"
-	"github.com/champNoob/ebidsystem/backend/controllers"
-	"github.com/champNoob/ebidsystem/backend/middleware"
-	"github.com/champNoob/ebidsystem/backend/services"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/user2083251241/ebidsystem/config"
+	"github.com/user2083251241/ebidsystem/controllers"
+	"github.com/user2083251241/ebidsystem/middleware"
+	"github.com/user2083251241/ebidsystem/services"
 	"gorm.io/gorm"
 )
 

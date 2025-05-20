@@ -1,4 +1,4 @@
-package services
+package matching
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/champNoob/ebidsystem/backend/models"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )

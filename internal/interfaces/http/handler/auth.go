@@ -1,30 +1,28 @@
-package controllers
+package handler
 
 import (
 	"time"
 
-	"github.com/champNoob/ebidsystem/backend/config"
-	"github.com/champNoob/ebidsystem/backend/middleware"
-	"github.com/champNoob/ebidsystem/backend/services"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5" //统一使用 v5
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/user2083251241/ebidsystem/internal/app/config"
+	"github.com/user2083251241/ebidsystem/internal/interfaces/http/dto"
+	"github.com/user2083251241/ebidsystem/internal/interfaces/http/middleware"
 )
 
 type AuthController struct {
-	userService  *services.UserService
-	orderService *services.OrderService
+	userService *user.UseCase
 }
 
-func NewAuthController(us *services.UserService) *AuthController {
+func NewAuthController(us *user.UseCase) *AuthController {
 	return &AuthController{
-		userService:  us,
-		orderService: services.NewOrderService(config.DB), //确保传递有效的 db 实例
+		userService: us,
 	}
 }
 
 // 注册：
 func (ac *AuthController) Register(c *fiber.Ctx) error {
-	var req services.RegisterRequest
+	var req dto.RegisterRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request format",
@@ -54,7 +52,7 @@ func (ac *AuthController) Register(c *fiber.Ctx) error {
 
 // 登录：
 func (ac *AuthController) Login(c *fiber.Ctx) error {
-	var req services.LoginRequest
+	var req dto.LoginRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request format",

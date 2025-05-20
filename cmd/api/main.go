@@ -9,12 +9,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/champNoob/ebidsystem/backend/config"
-	"github.com/champNoob/ebidsystem/backend/middleware"
-	"github.com/champNoob/ebidsystem/backend/models"
-	"github.com/champNoob/ebidsystem/backend/routes"
-	"github.com/champNoob/ebidsystem/backend/services"
-	"github.com/champNoob/ebidsystem/backend/utils"
+	"github.com/user2083251241/ebidsystem/internal/app/config"
+	// "github.com/user2083251241/ebidsystem/internal/authusecase"
+	"github.com/user2083251241/ebidsystem/internal/domain/entity"
+	"github.com/user2083251241/ebidsystem/internal/domain/matching"
+	"github.com/user2083251241/ebidsystem/internal/interfaces/http/middleware"
+	"github.com/user2083251241/ebidsystem/internal/interfaces/http/routes"
+
+	// "github.com/user2083251241/ebidsystem/internal/orderusecase"
+	"github.com/user2083251241/ebidsystem/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -42,12 +45,12 @@ func main() {
 	//log.Printf("LiveOrder struct: %+v", reflect.TypeOf(models.LiveOrder{})) //打印 LiveOrder 结构体定义
 	// 自动迁移数据库表：
 	if err := db.AutoMigrate(
-		&models.BaseOrder{},
-		&models.DraftOrder{},
-		&models.LiveOrder{},
-		&models.SellerSalesAuthorization{},
-		&models.Trade{},
-		&models.User{},
+		&entity.BaseOrder{},
+		&entity.DraftOrder{},
+		&entity.LiveOrder{},
+		&entity.SellerSalesAuthorization{},
+		&entity.Trade{},
+		&entity.User{},
 		// &models.Stock{},
 	); err != nil {
 		log.Fatalf("Database migration failed: %v", err)
@@ -66,7 +69,7 @@ func main() {
 			log.Printf("[PANIC] %v", e)
 		},
 	}))
-	app.Use(middleware.LoggingMiddleware) //自定义日志中间件
+	app.Use(middleware.LoggerMiddleware) //自定义日志中间件
 	// 跨域请求：
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*", //允许所有来源
@@ -103,7 +106,7 @@ func main() {
 	/* 启动撮合引擎 */
 
 	// 启动撮合引擎：
-	me := services.NewMatchingEngine(db)
+	me := matching.NewMatchingEngine(db)
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		me.Run(ctx)

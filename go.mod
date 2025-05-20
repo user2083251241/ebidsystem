@@ -1,13 +1,13 @@
 module github.com/user2083251241/ebidsystem
 
-// module github.com/champNoob/ebidsystem/backend //旧路径
+// module github.com/user2083251241/ebidsystem //旧路径
 
 go 1.24.1
 
-replace github.com/champNoob/ebidsystem/backend => ./ //宏替换
+replace github.com/user2083251241/ebidsystem => ./ //宏替换
 
 require (
-	github.com/champNoob/ebidsystem/backend v0.0.0-00010101000000-000000000000
+	github.com/user2083251241/ebidsystem v0.0.0-00010101000000-000000000000
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/gofiber/contrib/jwt v1.1.0

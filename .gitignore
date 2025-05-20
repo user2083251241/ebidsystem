@@ -1,0 +1,18 @@
+# Go
+*.exe
+*.test
+*.out
+*.so
+*.a
+*.o
+*.h
+*.pdb
+*.dll
+*.dylib
+*.swp
+*.swo
+.DS_Store
+.idea/
+.vscode/
+*.log
+*.rdb

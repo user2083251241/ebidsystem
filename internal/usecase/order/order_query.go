@@ -1,14 +1,16 @@
-package services
+package orderusecase
 
 import (
-	"github.com/champNoob/ebidsystem/backend/models"
+	"github.com/user2083251241/ebidsystem/internal/domain/entity"
+	"github.com/user2083251241/ebidsystem/internal/interfaces/http/dto"
+
 	"gorm.io/gorm"
 )
 
 // QueryStrategy 订单查询策略接口
 type QueryStrategy interface {
 	Apply(query *gorm.DB) *gorm.DB
-	GetDTOConverter() func(models.LiveOrder) models.OrderDTO
+	GetDTOConverter() func(entity.LiveOrder) dto.OrderDTO
 }
 
 // ---------------------- 具体策略实现 ----------------------
@@ -19,12 +21,12 @@ type SellerOrdersStrategy struct {
 }
 
 func (s *SellerOrdersStrategy) Apply(query *gorm.DB) *gorm.DB {
-	return query.Model(&models.LiveOrder{}).Where("creator_id = ? AND direction = 'sell'", s.UserID) //明确指定模型
+	return query.Model(&entity.LiveOrder{}).Where("creator_id = ? AND direction = 'sell'", s.UserID) //明确指定模型
 }
 
-func (s *SellerOrdersStrategy) GetDTOConverter() func(models.LiveOrder) models.OrderDTO {
-	return func(o models.LiveOrder) models.OrderDTO {
-		return models.OrderDTO{
+func (s *SellerOrdersStrategy) GetDTOConverter() func(entity.LiveOrder) entity.OrderDTO {
+	return func(o entity.LiveOrder) dto.OrderDTO {
+		return dto.OrderDTO{
 			ID:       o.ID,
 			Symbol:   o.Symbol,
 			Quantity: o.Quantity,
@@ -38,12 +40,12 @@ func (s *SellerOrdersStrategy) GetDTOConverter() func(models.LiveOrder) models.O
 type ClientOrdersStrategy struct{}
 
 func (c *ClientOrdersStrategy) Apply(query *gorm.DB) *gorm.DB {
-	return query.Model(&models.LiveOrder{}).Where("direction = 'sell' AND status = 'pending'")
+	return query.Model(&entity.LiveOrder{}).Where("direction = 'sell' AND status = 'pending'")
 }
 
-func (c *ClientOrdersStrategy) GetDTOConverter() func(models.LiveOrder) models.OrderDTO {
-	return func(o models.LiveOrder) models.OrderDTO {
-		return models.OrderDTO{
+func (c *ClientOrdersStrategy) GetDTOConverter() func(entity.LiveOrder) entity.OrderDTO {
+	return func(o entity.LiveOrder) dto.OrderDTO {
+		return dto.OrderDTO{
 			ID:     o.ID,
 			Symbol: o.Symbol,
 			Price:  o.Price,
@@ -58,9 +60,9 @@ func (t *TraderOrdersStrategy) Apply(query *gorm.DB) *gorm.DB {
 	return query.Unscoped() // 查看所有订单包括软删除
 }
 
-func (t *TraderOrdersStrategy) GetDTOConverter() func(models.LiveOrder) models.OrderDTO {
-	return func(o models.LiveOrder) models.OrderDTO {
-		return models.OrderDTO{
+func (t *TraderOrdersStrategy) GetDTOConverter() func(entity.LiveOrder) entity.OrderDTO {
+	return func(o entity.LiveOrder) entity.OrderDTO {
+		return entity.OrderDTO{
 			ID:       o.ID,
 			Symbol:   o.Symbol,
 			Quantity: o.Quantity,

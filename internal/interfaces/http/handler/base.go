@@ -1,9 +1,9 @@
-package controllers
+package handler
 
 import (
-	"github.com/champNoob/ebidsystem/backend/services"
 	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
+	"github.com/user2083251241/ebidsystem/services"
 )
 
 // 基础控制器（复用请求解析和校验）

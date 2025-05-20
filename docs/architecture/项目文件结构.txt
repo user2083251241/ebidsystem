@@ -14,7 +14,7 @@ project/
 ├── internal/                           	# 私有应用程序代码
 │   ├── app/                                		# 应用层
 │   │   ├── container/                    		# 依赖注入容器 package container
-│   │   │   ├── container. Go               			# 依赖注入容器
+│   │   │   ├── container. go               			# 依赖注入容器
 │   │   │   └── container_test.go        			# 容器测试
 │   │   └── config/					# package config 对应原项目 ./config/*
 │   │       ├── config.go                 		# 配置加载
@@ -128,7 +128,7 @@ project/
 │   ├── build.sh                           		# 构建脚本
 │   └── deploy.sh                          		# 部署脚本
 │
-├── Magefile.go                            # 项目管理命令
+├── magefile.go                            # 项目管理命令
 ├── go.mod                                 	# Go 模块定义
 ├── go.sum                                 	# 依赖版本锁定
 └── README.md                           # 项目说明

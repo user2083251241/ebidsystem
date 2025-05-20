@@ -1,4 +1,4 @@
-package models
+package entity
 
 type Stock struct {
 	Symbol string  `gorm:"primaryKey"`         // 股票代码（主键）

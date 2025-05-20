@@ -57,8 +57,7 @@
 ### 项目文件结构
 
 ```tree
-backend/
-project/
+backendDev/
 ├── bin/                               # 编译后的二进制文件
 │   └── api                               # API服务器二进制文件
 │
@@ -74,7 +73,7 @@ project/
 ├── internal/                          # 私有应用程序代码
 │   ├── app/                              # 应用层
 │   │   ├── container/                       # 依赖注入容器 package container
-│   │   │   ├── container. Go               	   # 依赖注入容器
+│   │   │   ├── container.go               	   # 依赖注入容器
 │   │   │   └── container_test.go        			# 容器测试
 │   │   └── config/					            # package config 对应原项目 ./config/*
 │   │       ├── config.go                 		# 配置加载
@@ -142,11 +141,11 @@ project/
 │   │           ├── router.go              			# 路由注册
 │   │           └── router_test.go         			# 路由测试
 │   │
-│   └── usecase/             			      # 用例层（替代原application层）
+│   └── usecase/             			      # 用例层（替代原 application 层）
 │       ├── order/                         	# package orderusecase 对应原项目 ./services/order/order_service.go
 │       │   ├── service.go                 		# 订单用例
 │       │   ├── service_test.go            		# 订单用例测试
-│       │   └── dto.go                     		# 内部DTO
+│       │   └── dto.go                     		# 内部 DTO
 │       └── auth/						            # package authusecase 对应原项目 ./services/user/user_service.go
 │           ├── service.go                 		# 认证用例
 │           └── service_test.go            		# 认证用例测试
