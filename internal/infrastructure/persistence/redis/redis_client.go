@@ -1,14 +1,16 @@
-package utils
+package redis
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/user2083251241/ebidsystem/internal/app/config"
+)
 )
 
 var (
@@ -17,6 +19,30 @@ var (
 	redisOnce   sync.Once
 	redisMutex  sync.Mutex //互斥锁
 )
+
+type Client struct {
+	*redis.Client
+	Ctx context.Context
+}
+
+func NewClient(cfg *Config) (*Client, error) {
+	client := redis.NewClient(&redis.Options{
+        Addr:     cfg.Addr,
+        Password: cfg.Password,
+        DB:       cfg.DB,
+    })
+
+    // 测试连接
+    ctx := context.Background()
+    if err := client.Ping(ctx).Err(); err != nil {
+        return nil, fmt.Errorf("failed to ping redis: %w", err)
+    }
+
+    return &Client{
+        Client: client,
+        Ctx:    ctx,
+    }, nil
+}
 
 func InitRedis() {
 	redisOnce.Do(func() {

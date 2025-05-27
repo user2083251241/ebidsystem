@@ -193,25 +193,56 @@ backendDev/
 └── README.md                          # 项目说明
 ```
 
-### `CSM` 分层
+### 项目结构分层
 
-> `controller` - `service` - `model`
+#### 1. `cmd/api/main.go`（入口层）
 
-#### `controller`
+- 职责：程序启动入口，初始化全局依赖（配置、数据库、日志等）。
+- 协作：调用`internal/app/container`初始化依赖注入容器，启动HTTP服务器。
 
-处理 HTTP 请求，调用 `service` 层逻辑
+#### 2. `configs/`（配置层）
 
-基础控制器封装通用请求解析和校验。
+- 职责：管理多环境配置（开发、测试、生产）。
+- 协作：通过`internal/app/config`包加载配置，供数据库、JWT、Kafka等组件使用。
 
-#### `service`
+#### 3. `internal/app`（应用组装层）
 
-实现业务逻辑，调用 `model` 层操作数据库
+- `container`：依赖注入容器，管理全局对象（如数据库连接、Redis客户端、Kafka生产者）。
+- `config`：解析配置文件，提供结构化配置给其他层。
 
-通过 `QueryCondition` 实现动态查询，`validateOrderRequest` 复用校验逻辑。
+#### 4. `internal/domain`（领域层）
 
-#### `model`
+- 核心业务逻辑：
+  - `entity`：定义领域对象（如`Order`、`User`、`Trade`），包含业务规则（如订单价格校验）。
+  - `repository`：定义仓储接口（如`OrderRepository`），解耦业务逻辑与持久化实现。
+  - `matching`：核心撮合引擎，实现订单匹配算法（如限价单、市价单的匹配逻辑）。
 
-定义数据模型，提供数据库操作方法
+#### 5. `internal/infrastructure`（基础设施层）
+
+- 持久化：实现领域层的仓储接口（如`mysql/order_repo.go`操作MySQL，`redis/cache.go`处理缓存）。
+- 消息队列：通过Kafka异步处理订单成交事件（如发送成交通知）。
+- 安全：JWT实现用户认证，加密敏感数据。
+
+#### 6. `internal/interfaces`（接口层）
+
+- HTTP接口：
+  - `dto`：定义请求/响应数据结构，屏蔽领域模型的内部细节。
+  - `handler`：处理HTTP请求，调用`usecase`层服务。
+  - `middleware`：认证、限流、日志等横切关注点。
+  - `router`：注册路由，关联处理器。
+
+#### 7. `internal/usecase`（用例层）
+
+- 编排业务流：
+  - `order`：处理下单逻辑（验证用户权限、调用撮合引擎、保存订单状态）。
+  - `auth`：处理用户注册、登录、Token签发。
+
+#### 8. `pkg/`（公共库）
+
+- 复用工具：
+  - `logger`：统一日志记录（如Zap集成）。
+  - `errors`：自定义错误类型，便于错误处理。
+  - `utils`：通用工具（如参数校验、时间处理）。
 
 ### 主函数核心流程
 

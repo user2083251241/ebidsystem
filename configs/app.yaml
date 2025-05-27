@@ -1,0 +1,4 @@
+database:
+  dsn: "root:jiongs@tcp(127.0.0.1:3306/ebidsystem?charset=utf8mb4&parseTime=True&loc=Local"
+  max_idle_conn: 10
+  max_open_conn: 100

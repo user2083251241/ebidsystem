@@ -10,51 +10,38 @@ import (
 	"time"
 
 	"github.com/user2083251241/ebidsystem/internal/app/config"
-	// "github.com/user2083251241/ebidsystem/internal/authusecase"
-	"github.com/user2083251241/ebidsystem/internal/domain/entity"
 	"github.com/user2083251241/ebidsystem/internal/domain/matching"
+	"github.com/user2083251241/ebidsystem/internal/infrastructure/persistence/mysql"
 	"github.com/user2083251241/ebidsystem/internal/interfaces/http/middleware"
 	"github.com/user2083251241/ebidsystem/internal/interfaces/http/routes"
-
-	// "github.com/user2083251241/ebidsystem/internal/orderusecase"
 	"github.com/user2083251241/ebidsystem/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	/* 加载环境变量 */
-	err := godotenv.Load(".env")
+	/* 加载配置 */
+	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatalf("Failed to load config: %v", err)
 	}
+	log.Printf("Database Config: %+v", cfg.Database)
 
 	/* 数据库初始化并连接 */
 
-	db, err := config.InitDB()
+	// 初始化数据库：
+	dbClient, err := mysql.NewDBClient(&config.Database{
+		DSN:         cfg.Database.DSN,
+		MaxIdleConn: cfg.Database.MaxIdleConn,
+		MaxOpenConn: cfg.Database.MaxOpenConn,
+	})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
-	} else {
-		log.Println("Successfully connected to database")
 	}
-	config.DB = db
-	//log.Printf("LiveOrder struct: %+v", reflect.TypeOf(models.LiveOrder{})) //打印 LiveOrder 结构体定义
-	// 自动迁移数据库表：
-	if err := db.AutoMigrate(
-		&entity.BaseOrder{},
-		&entity.DraftOrder{},
-		&entity.LiveOrder{},
-		&entity.SellerSalesAuthorization{},
-		&entity.Trade{},
-		&entity.User{},
-		// &models.Stock{},
-	); err != nil {
-		log.Fatalf("Database migration failed: %v", err)
-	}
+	defer dbClient.Close()
 
 	/* 初始化Fiber应用 */
 

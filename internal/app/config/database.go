@@ -1,16 +1,12 @@
 package config
 
-import (
-	"fmt"
-	"log"
+type Database struct {
+	DSN         string `mapstructure:"dsn"`
+	MaxIdleConn int    `mapstructure:"max_idle_conn"`
+	MaxOpenConn int    `mapstructure:"max_open_conn"`
+}
 
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
-)
-
-// 全局数据库实例：
-var DB *gorm.DB
-
+/*
 // 初始化数据库连接：
 func InitDB() (*gorm.DB, error) {
 	dsn := Get("DB_DSN")
@@ -25,4 +21,4 @@ func InitDB() (*gorm.DB, error) {
 		return nil, fmt.Errorf("数据库初始化失败: %w", err)
 	}
 	return DB, nil
-}
+}*/
