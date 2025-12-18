@@ -11,7 +11,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/user2083251241/ebidsystem/internal/app/config"
 )
-)
 
 var (
 	RedisClient *redis.Client
@@ -27,21 +26,21 @@ type Client struct {
 
 func NewClient(cfg *Config) (*Client, error) {
 	client := redis.NewClient(&redis.Options{
-        Addr:     cfg.Addr,
-        Password: cfg.Password,
-        DB:       cfg.DB,
-    })
+		Addr:     cfg.Addr,
+		Password: cfg.Password,
+		DB:       cfg.DB,
+	})
 
-    // 测试连接
-    ctx := context.Background()
-    if err := client.Ping(ctx).Err(); err != nil {
-        return nil, fmt.Errorf("failed to ping redis: %w", err)
-    }
+	// 测试连接
+	ctx := context.Background()
+	if err := client.Ping(ctx).Err(); err != nil {
+		return nil, fmt.Errorf("failed to ping redis: %w", err)
+	}
 
-    return &Client{
-        Client: client,
-        Ctx:    ctx,
-    }, nil
+	return &Client{
+		Client: client,
+		Ctx:    ctx,
+	}, nil
 }
 
 func InitRedis() {
